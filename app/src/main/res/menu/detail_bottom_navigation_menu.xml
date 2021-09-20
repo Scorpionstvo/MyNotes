@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/addImage"
+        android:icon="@drawable/ic_add"
+        android:orderInCategory="1"
+        android:title="@string/add_image" />
+
+    <item
+        android:id="@+id/changeBackground"
+        android:icon="@drawable/ic_wallpaper"
+        android:orderInCategory="2"
+        android:title="@string/change_background" />
+
+    <item
+        android:id="@+id/check"
+        android:icon="@drawable/ic_checkbox"
+        android:orderInCategory="3"
+        android:title="@string/check" />
+
+</menu>

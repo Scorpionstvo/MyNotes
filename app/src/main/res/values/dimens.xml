@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <dimen name="marginAroundButton">15dp</dimen>
+    <dimen name="largePrint">20sp</dimen>
+    <dimen name="smallPrint">15sp</dimen>
+
+</resources>

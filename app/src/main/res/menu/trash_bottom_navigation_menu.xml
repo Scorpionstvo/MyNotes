@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/restore"
+        android:icon="@drawable/ic_restore"
+        android:orderInCategory="1"
+        android:title="@string/restore" />
+
+    <item
+        android:id="@+id/delete_permanently"
+        android:icon="@drawable/ic_delete"
+        android:orderInCategory="2"
+        android:title="@string/delete_permanently" />
+
+    <item
+        android:id="@+id/plug"
+        android:title=""
+        android:visible="false" />
+</menu>
