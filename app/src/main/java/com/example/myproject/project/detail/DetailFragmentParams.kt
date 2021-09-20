@@ -1,7 +1,8 @@
-package com.example.myproject.project
+package com.example.myproject.project.detail
 
 import android.os.Parcel
 import android.os.Parcelable
+import com.example.myproject.project.note.Note
 
 data class DetailFragmentParams(
         val note: Note,

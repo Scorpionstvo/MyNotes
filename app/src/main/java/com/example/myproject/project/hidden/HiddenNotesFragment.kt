@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.hidden
 
 import android.app.AlertDialog
 import android.os.Bundle
@@ -11,7 +11,8 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentHiddenNotesBinding
-import com.example.myproject.dummy.dataBase.DbManager
+import com.example.myproject.data.db.DbManager
+import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

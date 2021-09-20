@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.detail
 
 import android.os.Bundle
 import android.text.Spannable
@@ -12,10 +12,14 @@ import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.currentnote.*
 import com.example.currentnote.databinding.FragmentDetailBinding
-import com.example.myproject.dummy.dataBase.DbManager
+import com.example.myproject.project.MainActivity
+import com.example.myproject.data.db.DbManager
+import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
-import com.example.myproject.project.util.DataModel
+import com.example.myproject.project.model.DataModel
 import com.example.myproject.project.util.OnBackPressedListener
+import com.example.myproject.project.wallpaper.Wallpaper
+import com.example.myproject.project.wallpaper.WallpaperAdapter
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList

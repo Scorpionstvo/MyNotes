@@ -5,7 +5,7 @@
     android:id="@+id/constDetail"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.myproject.project.DetailFragment">
+    tools:context="com.example.myproject.project.detail.DetailFragment">
 
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tbDetail"

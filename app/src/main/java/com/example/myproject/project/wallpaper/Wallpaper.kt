@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.wallpaper
 
 import com.example.currentnote.R
 

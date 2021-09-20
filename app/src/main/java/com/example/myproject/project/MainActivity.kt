@@ -7,8 +7,16 @@ import android.os.Bundle
 import androidx.activity.viewModels
 import androidx.fragment.app.Fragment
 import com.example.currentnote.R
+import com.example.myproject.project.detail.DetailFragment
+import com.example.myproject.project.detail.DetailFragmentParams
+import com.example.myproject.project.hidden.HiddenNotesFragment
+import com.example.myproject.project.list.NotesFragment
+import com.example.myproject.project.note.Note
+import com.example.myproject.project.password.PasswordFragment
+import com.example.myproject.project.password.PasswordFragmentParams
+import com.example.myproject.project.trash.TrashFragment
 import com.example.myproject.project.util.Constants
-import com.example.myproject.project.util.DataModel
+import com.example.myproject.project.model.DataModel
 import com.example.myproject.project.util.OnBackPressedListener
 
 

@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.list
 
 import android.app.AlertDialog
 import android.content.Context
@@ -13,7 +13,8 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentNotesBinding
-import com.example.myproject.dummy.dataBase.DbManager
+import com.example.myproject.data.db.DbManager
+import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

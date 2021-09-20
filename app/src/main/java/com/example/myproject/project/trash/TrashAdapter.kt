@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.trash
 
 import android.view.*
 import android.widget.CheckBox
@@ -7,6 +7,8 @@ import android.widget.TextView
 import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.currentnote.R
+import com.example.myproject.project.wallpaper.Wallpaper
+import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.DateFormatter
 import kotlin.collections.ArrayList
 
