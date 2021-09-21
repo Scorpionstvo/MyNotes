@@ -7,7 +7,6 @@
     android:layout_height="match_parent"
     tools:context="com.example.myproject.project.DetailFragment">
 
-
     <androidx.appcompat.widget.Toolbar
         android:id="@+id/tbDetail"
         android:layout_width="match_parent"
@@ -33,10 +32,9 @@
             android:background="@android:color/transparent"
             android:hint="@string/title"
             android:inputType="textMultiLine"
-            android:padding="10dp"
-            android:textSize="@dimen/largePrint"
-            android:textStyle="bold"
-            tools:ignore="LabelFor" />
+            android:padding="@dimen/padding_medium"
+            android:textSize="@dimen/print_large"
+            android:textStyle="bold" />
 
         <EditText
             android:id="@+id/etContent"
@@ -46,13 +44,11 @@
             android:background="@android:color/transparent"
             android:gravity="top"
             android:inputType="textMultiLine"
-            android:padding="10dp"
-            android:textSize="@dimen/largePrint"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:ignore="LabelFor" />
+            android:padding="@dimen/padding_medium"
+            android:textSize="@dimen/print_large"
+            app:layout_constraintTop_toTopOf="parent" />
 
     </LinearLayout>
-
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bnvDetail"
@@ -66,7 +62,7 @@
         android:id="@+id/rcWallpapers"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:padding="10dp"
+        android:padding="@dimen/padding_medium"
         android:visibility="gone"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

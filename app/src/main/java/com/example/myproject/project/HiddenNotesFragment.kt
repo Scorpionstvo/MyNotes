@@ -247,9 +247,9 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
             hiddenList.sort()
             adapter.updateAdapter(hiddenList)
             if (hiddenList.isNotEmpty()) {
-                binding?.tvEmpty?.visibility = View.GONE
+                binding?.tvHiddenListEmpty?.visibility = View.GONE
             } else {
-                binding?.tvEmpty?.visibility = View.VISIBLE
+                binding?.tvHiddenListEmpty?.visibility = View.VISIBLE
             }
         }
 

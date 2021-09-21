@@ -19,8 +19,8 @@
             android:id="@+id/cardView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="2dp"
-            app:cardCornerRadius="5dp"
+            android:layout_margin="@dimen/margin_very_small"
+            app:cardCornerRadius="@dimen/radius_medium"
             app:cardUseCompatPadding="true">
 
             <SearchView
@@ -40,31 +40,26 @@
 
     <TextView
         android:id="@+id/tvGreeting"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/no_notes"
-        android:textSize="18sp"
-        android:textStyle="italic"
+        style="@style/TextViewListEmpty"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/fbAdd"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="16dp"
-        android:layout_marginRight="16dp"
-        android:layout_marginBottom="16dp"
-        android:background="#44FB6C"
+        android:layout_marginEnd="@dimen/margin_fb_add"
+        android:layout_marginRight="@dimen/margin_fb_add"
+        android:layout_marginBottom="@dimen/margin_fb_add"
+        android:background="@color/teal_200"
         android:clickable="true"
         android:contentDescription="@string/add_note"
         android:focusable="true"
-        android:src="@drawable/ic_add"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent" />
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_add" />
 
     <TextView
         android:id="@+id/tvTitle"

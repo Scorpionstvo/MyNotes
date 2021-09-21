@@ -2,77 +2,82 @@
     <string name="app_name">Notes</string>
 
     <!-- Notes Fragment -->
-
-    <string name="undo">undo</string>
+    <string name="add_note">add note</string>
+    <string name="anchor">anchor</string>
+    <string name="choose_all">Choose all</string>
     <string name="delete">delete</string>
+    <string name="deleting_notes">Deleting notes</string>
+    <string name="grid">grid</string>
+    <string name="hide">hide</string>
     <string name="list">list</string>
-    <string name="trash">trash</string>
     <string name="no_notes">no notes</string>
     <string name="ok">OK</string>
+    <string name="personal_folder">personal folder</string>
     <string name="search_notes">Search notes</string>
-    <string name="add_note">add note</string>
-    <string name="grid">grid</string>
     <string name="select_objects">Select objects</string>
     <string name="selected">Selected:</string>
-    <string name="deleting_notes">Deleting notes</string>
+    <string name="top_description">note is pinned</string>
+    <string name="trash">корзина</string>
+    <string name="undo">undo</string>
     <string name="unfasten">unfasten</string>
-    <string name="anchor">anchor</string>
-    <string name="hide">hide</string>
-    <string name="personal_folder">personal folder</string>
+
     <plurals name="plurals_note_count">
         <item quantity="one"> note</item>
-        <item quantity="two"> notes</item>
-        <item quantity="few"> notes</item>
-        <item quantity="many"> notes</item>
+        <item quantity="other"> notes</item>
     </plurals>
+
     <plurals name="plurals_note_moved">
         <item quantity="one">Note moved</item>
-        <item quantity="few">Notes moved</item>
-        <item quantity="many">Notes moved</item>
+        <item quantity="other">Notes moved</item>
     </plurals>
 
     <!-- Detail Fragment -->
-    <string name="pre_save">pre-save</string>
-    <string name="send">send</string>
-    <string name="title">Title</string>
     <string name="add_image">image</string>
     <string name="change_background">background</string>
     <string name="check">check</string>
-    <string name="toSend">Send</string>
+    <string name="pre_save">pre-save</string>
+    <string name="send">send</string>
     <string name="send_to_desktop">send to desktop</string>
+    <string name="title">Title</string>
+    <string name="toSend">Send</string>
 
     <!-- Trash Fragment -->
-    <string name="shift">shift</string>
-    <string name="message_about_deleting_notes_from_trash">Notes are kept in the trash for 30 days before being permanently deleted</string>
-    <string name="title_toolbar_trash_fragment">Trash</string>
-    <string name="empty_trash">empty trash</string>
     <string name="delete_permanently">delete permanently</string>
+    <string name="empty_trash">empty trash</string>
+    <string name="message_about_deleting_notes_from_trash">Notes are kept in the trash for 30 days before being permanently deleted</string>
     <string name="restore">restore</string>
+    <string name="shift">shift</string>
+    <string name="title_toolbar_trash_fragment">Trash</string>
 
 
     <!-- Hidden Fragment -->
-    <string name="title_toolbar_hidden_notes">Hidden notes</string>
     <string name="declassify">declassify</string>
+    <string name="lock_description">You are in hidden notes tab</string>
+    <string name="title_toolbar_hidden_notes">Hidden notes</string>
 
     <!-- Password Fragment -->
-    <string name="password_created">Password created successfully!</string>
-    <string name="write_your_email">Write_your_email</string>
-    <string name="password_mismatch">"Password mismatch"</string>
-    <string name="save_email">save</string>
-    <string name="restore_password"><u>Forgot your password?</u></string>
-    <string name="to_personal_folder"> to personal folder</string>
-    <string name="password_recovery">Password recovery</string>
-    <string name="send_password_to_mail">"Send password to mail?"</string>
+    <string name="cancel">Cancel</string>
+    <string name="change_password">change password</string>
     <string name="check_your_email">"Check your email"</string>
-    <string name="this_email_does_not_exist">"This email does not exist"</string>
-    <string name="enter_password">"Enter password"</string>
-    <string name="wrong_password">"Wrong password"</string>
-    <string name="data_saved">Data saved successfully</string>
-    <string name="password_is_empty">Write password</string>
-    <string name="explanation">* email will be needed to recover your password. We are not engaged in advertising mailing.</string>
     <string name="create_password">Create password</string>
+    <string name="data_saved">Data saved successfully</string>
+    <string name="enter">Enter</string>
+    <string name="enter_password">"Enter password"</string>
+    <string name="explanation">* email will be needed to recover your password. We are not engaged in advertising mailing.</string>
+    <string name="password_created">Password created successfully!</string>
+    <string name="password_is_empty">Write password</string>
+    <string name="password_mismatch">"Password mismatch"</string>
+    <string name="password_recovery">Password recovery</string>
+    <string name="restore_password"><u>Forgot your password?</u></string>
     <string name="save_data">Save</string>
-
+    <string name="save_email">save</string>
+    <string name="send_password_to_mail">"Send password to mail?"</string>
+    <string name="this_email_does_not_exist">"This email does not exist"</string>
+    <string name="toggle_visibility_password">toggle visibility password</string>
+    <string name="to_personal_folder"> to personal folder</string>
+    <string name="write_your_email">Write_your_email</string>
+    <string name="wrong_password">"Wrong password"</string>
 
 </resources>
+
 

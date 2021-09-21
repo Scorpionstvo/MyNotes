@@ -18,14 +18,14 @@
             android:id="@+id/cardView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:padding="10dp"
-            app:cardCornerRadius="5dp">
+            android:layout_margin="@dimen/padding_medium"
+            android:padding="@dimen/padding_medium"
+            app:cardCornerRadius="@dimen/radius_medium">
 
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="8dp"
+                android:padding="@dimen/padding_medium"
                 android:text="@string/message_about_deleting_notes_from_trash"
                 android:textColor="@color/teal_200" />
         </androidx.cardview.widget.CardView>
@@ -34,8 +34,8 @@
             android:id="@+id/cardView2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="2dp"
-            app:cardCornerRadius="5dp"
+            android:layout_margin="@dimen/margin_very_small"
+            app:cardCornerRadius="@dimen/radius_medium"
             app:cardUseCompatPadding="true">
 
             <SearchView
@@ -54,18 +54,12 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tv_empty"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/no_notes"
-        android:textColor="@color/black"
-        android:textSize="18sp"
-        android:textStyle="italic"
+        android:id="@+id/tv_trash_list_empty"
+        style="@style/TextViewListEmpty"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
-
 
     <TextView
         android:id="@+id/tvTrashTitle"
@@ -82,8 +76,6 @@
         android:id="@+id/tbTrashCan"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:minHeight="?attr/actionBarSize"
-        android:theme="?attr/actionBarTheme"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"

@@ -223,9 +223,9 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
             sort(trashList)
             adapter.updateAdapter(trashList)
             if (trashList.size > 0) {
-                binding?.tvEmpty?.visibility = View.GONE
+                binding?.tvTrashListEmpty?.visibility = View.GONE
             } else {
-                binding?.tvEmpty?.visibility = View.VISIBLE
+                binding?.tvTrashListEmpty?.visibility = View.VISIBLE
             }
         }
     }
