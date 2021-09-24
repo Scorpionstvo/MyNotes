@@ -22,8 +22,8 @@
     <string name="unfasten">unfasten</string>
 
     <plurals name="plurals_note_count">
-        <item quantity="one"> note</item>
-        <item quantity="other"> notes</item>
+        <item quantity="one">%d note</item>
+        <item quantity="other">%d notes</item>
     </plurals>
 
     <plurals name="plurals_note_moved">

@@ -5,10 +5,9 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/margin_small"
-    app:cardCornerRadius="@dimen/radius_big"
-    app:cardElevation="5dp"
-    app:cardMaxElevation="7dp"
-    app:contentPadding="7dp">
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:contentPadding="@dimen/padding_big">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -34,7 +33,7 @@
             android:ellipsize="end"
             android:gravity="start"
             android:maxLines="3"
-            android:textSize="@dimen/print_medium"
+            android:textSize="@dimen/print_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvTitleNote" />

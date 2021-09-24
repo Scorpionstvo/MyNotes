@@ -145,9 +145,10 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
                     val noteString =
                         this.resources.getQuantityString(
                             R.plurals.plurals_note_count,
-                            checkedItems.size
+                            checkedItems.size, checkedItems.size
                         )
-                    alertDialog.setMessage(resources.getString(R.string.delete) + " ${checkedItems.size}  $noteString?")
+                    val message = "${resources.getString(R.string.delete)} $noteString?"
+                    alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
                         R.string.undo
                     ) { dialog, _ ->

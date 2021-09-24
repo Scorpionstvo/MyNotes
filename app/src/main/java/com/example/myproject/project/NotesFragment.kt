@@ -187,8 +187,9 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
                                 note
                         )
                     }
+
                     val noteMoved = this.resources.getQuantityString(R.plurals.plurals_note_moved, checkedItems.size)
-                    Toast.makeText(context, "$noteMoved " + resources.getString(R.string.to_personal_folder), Toast.LENGTH_LONG)
+                    Toast.makeText(context, "$noteMoved ${resources.getString(R.string.to_personal_folder)}", Toast.LENGTH_LONG)
                             .show()
                     fillAdapter("")
                     goToNormalView()
@@ -217,8 +218,9 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
                     alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
-                            this.resources.getQuantityString(R.plurals.plurals_note_count, checkedItems.size)
-                    alertDialog.setMessage(resources.getString(R.string.delete) + " ${checkedItems.size}  $noteString?")
+                            this.resources.getQuantityString(R.plurals.plurals_note_count, checkedItems.size, checkedItems.size)
+                    val message = "${resources.getString(R.string.delete)} $noteString?"
+                    alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
                             R.string.undo
                     ) { dialog, _ ->

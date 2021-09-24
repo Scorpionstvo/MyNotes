@@ -6,7 +6,7 @@
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/padding_medium"
     app:cardBackgroundColor="@android:color/transparent"
-    app:cardCornerRadius="@dimen/radius_big"
+    app:cardCornerRadius="@dimen/radius_medium"
     app:contentPadding="@dimen/padding_medium">
 
     <androidx.cardview.widget.CardView
@@ -14,7 +14,7 @@
         android:layout_width="@dimen/wallpaper_width"
         android:layout_height="@dimen/wallpaper_height"
         android:background="@android:color/transparent"
-        app:cardCornerRadius="@dimen/radius_big">
+        app:cardCornerRadius="@dimen/radius_medium">
 
     </androidx.cardview.widget.CardView>
 </androidx.cardview.widget.CardView>

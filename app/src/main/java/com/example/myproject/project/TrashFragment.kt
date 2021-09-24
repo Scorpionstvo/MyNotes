@@ -1,5 +1,6 @@
 package com.example.myproject.project
 
+import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -82,6 +83,7 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         }
     }
 
+    @SuppressLint("SetTextI18n")
     private fun initToolbar() {
         binding!!.tbTrashCan.menu.findItem(R.id.list).title = nameIconGrid
         binding!!.tbTrashCan.setNavigationIcon(R.drawable.ic_back)
@@ -155,7 +157,8 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
                             R.plurals.plurals_note_count,
                             checkedItems.size
                         )
-                    alertDialog.setMessage(resources.getString(R.string.delete_permanently) + " ${checkedItems.size}  $noteString?")
+                    val message = "${resources.getString(R.string.delete_permanently)} $noteString?"
+                    alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
                         R.string.undo
                     )

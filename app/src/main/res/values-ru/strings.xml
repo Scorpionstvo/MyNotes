@@ -23,15 +23,16 @@
     <string name="unfasten">открепить</string>
 
     <plurals name="plurals_note_count">
-        <item quantity="one" tools:ignore="ImpliedQuantity"> заметку</item>
-        <item quantity="few"> заметки</item>
-        <item quantity="many"> заметок</item>
+        <item quantity="one">%d заметку</item>
+        <item quantity="few">%d заметки</item>
+        <item quantity="many">%d заметок</item>
     </plurals>
 
     <plurals name="plurals_note_moved">
         <item quantity="one" tools:ignore="ImpliedQuantity">Заметка перемещена</item>
         <item quantity="few">Заметки перемещены</item>
         <item quantity="many">Заметки перемещены</item>
+        <item quantity="other">Заметки перемещены</item>
     </plurals>
 
     <!-- Detail Fragment -->

@@ -19,7 +19,29 @@
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:text">@string/no_notes</item>
-        <item name="android:textSize">@dimen/print_large</item>
+        <item name="android:textSize">@dimen/print_medium</item>
         <item name="android:textStyle">italic</item>
     </style>
+
+    <style name="TextViewTitleFragment">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:textSize">@dimen/print_large</item>
+    </style>
+
+    <style name="SearchViewNotes">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:queryHint">@string/search_notes</item>
+        <item name="queryBackground">@color/transparent</item>
+    </style>
+
+    <style name="CardViewAroundSearchView">
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="cardCornerRadius">20dp</item>
+        <item name="cardUseCompatPadding">true</item>
+    </style>
+
 </resources>
