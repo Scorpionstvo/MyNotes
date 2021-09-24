@@ -3,13 +3,11 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/cardView"
     android:layout_width="match_parent"
-    android:layout_height="200dp"
-    android:layout_margin="4dp"
-    android:maxHeight="20dp"
-    app:cardCornerRadius="8dp"
-    app:cardElevation="5dp"
-    app:cardMaxElevation="7dp"
-    app:contentPadding="7dp">
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/margin_small"
+    app:cardCornerRadius="16dp"
+    app:cardElevation="0dp"
+    app:contentPadding="@dimen/padding_big">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
@@ -22,7 +20,7 @@
             android:ellipsize="end"
             android:gravity="start"
             android:maxLines="1"
-            android:textSize="@dimen/largePrint"
+            android:textSize="@dimen/print_large"
             android:textStyle="bold"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
@@ -35,7 +33,7 @@
             android:ellipsize="end"
             android:gravity="start"
             android:maxLines="3"
-            android:textSize="@dimen/smallPrint"
+            android:textSize="@dimen/print_button"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvTitleNote" />
@@ -45,7 +43,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="35dp"
-            android:textSize="10sp"
+            android:textSize="@dimen/print_small"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toBottomOf="@+id/tvContentNote" />
@@ -55,12 +53,13 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginTop="35dp"
+            android:contentDescription="@string/top_description"
             android:enabled="true"
-            android:src="@drawable/ic_top"
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintStart_toEndOf="@+id/tvTime"
-            app:layout_constraintTop_toBottomOf="@+id/tvContentNote" />
+            app:layout_constraintTop_toBottomOf="@+id/tvContentNote"
+            app:srcCompat="@drawable/ic_top" />
 
         <CheckBox
             android:id="@+id/checkRec"

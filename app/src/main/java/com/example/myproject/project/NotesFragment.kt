@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import android.view.*
 import android.widget.SearchView
+import android.widget.TextView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
@@ -47,12 +48,12 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
     }
 
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
-        savedInstanceState: Bundle?
+            inflater: LayoutInflater,
+            container: ViewGroup?,
+            savedInstanceState: Bundle?
     ): View {
         binding = FragmentNotesBinding.inflate(inflater)
-        return binding!!.root
+        return binding?.root!!
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -69,17 +70,17 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
 
     private fun recyclerViewStateCreated() {
         val share =
-            activity?.getSharedPreferences(
-                Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
-                Context.MODE_PRIVATE
-            )
+                activity?.getSharedPreferences(
+                        Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
+                        Context.MODE_PRIVATE
+                )
         isListView = share!!.getBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, false)
         if (isListView) {
             binding!!.rcList.layoutManager = GridLayoutManager(context, 1)
             nameIconGrid = resources.getString(R.string.grid)
         } else {
             binding!!.rcList.layoutManager =
-                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+                    StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
             nameIconGrid = resources.getString(R.string.list)
         }
     }
@@ -87,7 +88,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
     private fun changeStateRecyclerView(isListView: Boolean): String {
         return if (isListView) {
             binding!!.rcList.layoutManager =
-                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+                    StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
             resources.getString(R.string.list)
         } else {
             binding!!.rcList.layoutManager = GridLayoutManager(context, 1)
@@ -115,7 +116,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
                     adapter.allChecked(isChecked)
 
                     binding!!.tvTitle.text =
-                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
+                            resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
 
                     val isEnabled = adapter.getCheckedId().size > 0
                     bottomMenuEnable(isEnabled)
@@ -183,12 +184,13 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
                         val indexForDelete = checkedItems[i]
                         val note = list[indexForDelete]
                         dbManager.moveToPersonalFolder(
-                            note
+                                note
                         )
                     }
-                   val noteMoved = this.resources.getQuantityString(R.plurals.plurals_note_moved, checkedItems.size)
-                    Toast.makeText(context, "$noteMoved " + resources.getString(R.string.to_personal_folder), Toast.LENGTH_LONG)
-                        .show()
+
+                    val noteMoved = this.resources.getQuantityString(R.plurals.plurals_note_moved, checkedItems.size)
+                    Toast.makeText(context, "$noteMoved ${resources.getString(R.string.to_personal_folder)}", Toast.LENGTH_LONG)
+                            .show()
                     fillAdapter("")
                     goToNormalView()
                 }
@@ -216,21 +218,22 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
                     alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
-                        this.resources.getQuantityString(R.plurals.plurals_note_count, checkedItems.size)
-                    alertDialog.setMessage(resources.getString(R.string.delete) + " ${checkedItems.size}  $noteString?")
+                            this.resources.getQuantityString(R.plurals.plurals_note_count, checkedItems.size, checkedItems.size)
+                    val message = "${resources.getString(R.string.delete)} $noteString?"
+                    alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
-                        R.string.undo
+                            R.string.undo
                     ) { dialog, _ ->
                         dialog.dismiss()
                     }
                     alertDialog.setPositiveButton(
-                        R.string.ok
+                            R.string.ok
                     ) { dialog, _ ->
                         for (i in checkedItems.indices) {
                             val indexForDelete = checkedItems[i]
                             val note = list[indexForDelete]
                             dbManager.removeItem(
-                                note
+                                    note
                             )
                             fillAdapter("")
                         }
@@ -311,11 +314,11 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
 
     override fun onDestroy() {
         val savedVariant =
-            activity?.getSharedPreferences(
-                Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
-                Context.MODE_PRIVATE
-            )
-                ?.edit()
+                activity?.getSharedPreferences(
+                        Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
+                        Context.MODE_PRIVATE
+                )
+                        ?.edit()
         savedVariant?.putBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, isListView)
         savedVariant?.apply()
         dbManager.closeDb()
@@ -346,7 +349,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
             adapter.isShowCheckBox(false)
             binding!!.tbNotes.menu?.clear()
             binding!!.tbNotes.inflateMenu(R.menu.notes_toolbar_menu)
-           false
+            false
         } else true
     }
 

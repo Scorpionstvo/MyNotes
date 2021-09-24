@@ -145,9 +145,10 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
                     val noteString =
                         this.resources.getQuantityString(
                             R.plurals.plurals_note_count,
-                            checkedItems.size
+                            checkedItems.size, checkedItems.size
                         )
-                    alertDialog.setMessage(resources.getString(R.string.delete) + " ${checkedItems.size}  $noteString?")
+                    val message = "${resources.getString(R.string.delete)} $noteString?"
+                    alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
                         R.string.undo
                     ) { dialog, _ ->
@@ -247,9 +248,9 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
             hiddenList.sort()
             adapter.updateAdapter(hiddenList)
             if (hiddenList.isNotEmpty()) {
-                binding?.tvEmpty?.visibility = View.GONE
+                binding?.tvHiddenListEmpty?.visibility = View.GONE
             } else {
-                binding?.tvEmpty?.visibility = View.VISIBLE
+                binding?.tvHiddenListEmpty?.visibility = View.VISIBLE
             }
         }
 

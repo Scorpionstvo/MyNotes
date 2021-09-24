@@ -2,74 +2,83 @@
     <string name="app_name">Заметки</string>
 
     <!-- Notes Fragment -->
-    <string name="undo">отмена</string>
-    <string name="delete">удалить</string>
-    <string name="list">список</string>
-    <string name="trash">корзина</string>
-    <string name="ok">ok</string>
-    <string name="no_notes">Нет заметок</string>
-    <string name="search_notes">Поиск заметок</string>
     <string name="add_note">добавить заметку</string>
+    <string name="anchor">закрепить</string>
+    <string name="choose_all">Выбрать всё</string>
+    <string name="delete">удалить</string>
+    <string name="deleting_notes">Удаление заметок</string>
     <string name="grid">плитка</string>
+    <string name="hide">скрыть</string>
+    <string name="list">список</string>
+    <string name="no_notes">Нет заметок</string>
+    <string name="ok">ok</string>
+    <string name="personal_folder">личная папка</string>
+    <string name="search_notes">Поиск заметок</string>
     <string name="select_objects">Выберите объекты</string>
     <string name="selected">Выбрано:</string>
-    <string name="deleting_notes">Удаление заметок</string>
+    <string name="top_description">note is pinned</string>
     <string name="toSend">Отправить</string>
+    <string name="trash">корзина</string>
+    <string name="undo">отмена</string>
     <string name="unfasten">открепить</string>
-    <string name="anchor">закрепить</string>
-    <string name="hide">скрыть</string>
-    <string name="personal_folder">личная папка</string>
+
+    <plurals name="plurals_note_count">
+        <item quantity="one">%d заметку</item>
+        <item quantity="few">%d заметки</item>
+        <item quantity="many">%d заметок</item>
+    </plurals>
+
     <plurals name="plurals_note_moved">
         <item quantity="one" tools:ignore="ImpliedQuantity">Заметка перемещена</item>
         <item quantity="few">Заметки перемещены</item>
         <item quantity="many">Заметки перемещены</item>
+        <item quantity="other">Заметки перемещены</item>
     </plurals>
-    <plurals name="plurals_note_count">
-        <item quantity="one" tools:ignore="ImpliedQuantity"> заметку</item>
-        <item quantity="few"> заметки</item>
-        <item quantity="many"> заметок</item>
-    </plurals>
-
 
     <!-- Detail Fragment -->
-    <string name="pre_save">предварительно сохранить</string>
-    <string name="send">отправить</string>
-    <string name="title">Title</string>
     <string name="add_image">картинка</string>
     <string name="change_background">обои</string>
     <string name="check">флажок</string>
-    <string name="shift">переместить</string>
+    <string name="pre_save">предварительно сохранить</string>
+    <string name="send">отправить</string>
     <string name="send_to_desktop">отправить на рабочий стол</string>
+    <string name="shift">переместить</string>
+    <string name="title">Title</string>
 
     <!-- Trash Fragment -->
-    <string name="message_about_deleting_notes_from_trash">Заметки, находящиеся в корзине, через 30 дней будут безвозвратно удалены </string>
-    <string name="title_toolbar_trash_fragment">Корзина</string>
-    <string name="empty_trash">очистить корзину</string>
     <string name="delete_permanently">удалить навсегда</string>
+    <string name="empty_trash">очистить корзину</string>
+    <string name="message_about_deleting_notes_from_trash">Заметки, находящиеся в корзине, через 30 дней будут безвозвратно удалены </string>
     <string name="restore">восстановить</string>
+    <string name="title_toolbar_trash_fragment">Корзина</string>
 
     <!-- Hidden Fragment -->
-    <string name="title_toolbar_hidden_notes">Скрытые заметки</string>
     <string name="declassify">отменить скрытие</string>
+    <string name="lock_description">You are in hidden notes tab</string>
+    <string name="title_toolbar_hidden_notes">Скрытые заметки</string>
 
     <!-- Password Fragment -->
-    <string name="password_created">Пароль успешно создан!</string>
-    <string name="write_your_email">Укажите Ваш email</string>
-    <string name="password_mismatch">"Пароли не совпадают"</string>
-    <string name="save_email">сохранить</string>
-    <string name="restore_password"><u>Забыли пароль?</u></string>
-    <string name="to_personal_folder"> в личную папку</string>
-    <string name="password_recovery">Восстановление пароля</string>
-    <string name="send_password_to_mail">"Выслать пароль на почту?"</string>
+    <string name="cancel">Отмена</string>
+    <string name="change_password">поменять пароль</string>
     <string name="check_your_email">"Проверьте Вашу почту"</string>
-    <string name="this_email_does_not_exist">"Такой email не существует"</string>
-    <string name="enter_password">"Введите пароль"</string>
-    <string name="wrong_password">"Неверный пароль"</string>
+    <string name="create_password">Создайте пароль</string>
     <string name="data_saved">Данные успешно сохранены</string>
-    <string name="password_is_empty">Введите пароль</string>
+    <string name="enter">Войти</string>
+    <string name="enter_password">"Введите пароль"</string>
     <string name="explanation">* email будет нужен для восстановления пароля. Мы не занимаемся рекламной рассылкой.</string>
-    <string name="create_password">Придумайте пароль</string>
+    <string name="password_created">Пароль успешно создан!</string>
+    <string name="password_is_empty">Введите пароль</string>
+    <string name="password_mismatch">"Пароли не совпадают"</string>
+    <string name="password_recovery">Восстановление пароля</string>
+    <string name="restore_password"><u>Забыли пароль?</u></string>
     <string name="save_data">Сохранить</string>
-
+    <string name="save_email">сохранить</string>
+    <string name="send_password_to_mail">"Выслать пароль на почту?"</string>
+    <string name="this_email_does_not_exist">"Такой email не существует"</string>
+    <string name="toggle_visibility_password">toggle visibility password</string>
+    <string name="to_personal_folder"> в личную папку</string>
+    <string name="write_your_email">Укажите Ваш email</string>
+    <string name="wrong_password">"Неверный пароль"</string>
 
 </resources>
+
