@@ -1,8 +1,8 @@
-package com.example.myproject.project
+package com.example.myproject.project.password
 
 import android.os.Parcel
 import android.os.Parcelable
-import com.example.myproject.project.DetailFragmentParams
+import com.example.myproject.project.detail.DetailFragmentParams
 
 class PasswordFragmentParams(
     val isDataChange: Boolean

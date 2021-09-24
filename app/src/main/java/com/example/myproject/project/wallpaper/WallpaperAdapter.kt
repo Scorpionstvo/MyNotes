@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.wallpaper
 
 import android.view.LayoutInflater
 import android.view.View

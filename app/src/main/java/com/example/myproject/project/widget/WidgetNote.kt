@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.widget
 
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider

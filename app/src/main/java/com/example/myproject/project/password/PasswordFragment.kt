@@ -1,4 +1,4 @@
-package com.example.myproject.project
+package com.example.myproject.project.password
 
 import android.app.AlertDialog
 import android.content.Context

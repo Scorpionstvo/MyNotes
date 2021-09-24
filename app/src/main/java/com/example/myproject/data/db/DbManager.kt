@@ -1,10 +1,10 @@
-package com.example.myproject.dummy.dataBase
+package com.example.myproject.data.db
 
 import android.content.ContentValues
 import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.provider.BaseColumns
-import com.example.myproject.project.Note
+import com.example.myproject.project.note.Note
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
