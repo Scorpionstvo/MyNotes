@@ -11,8 +11,8 @@ class MyApplication : Application() {
     }
 
     override fun onCreate() {
-        super.onCreate()
         dbManager = DbManager.newInstance(DbCreator(this))
+        super.onCreate()
     }
 
 }

@@ -86,7 +86,6 @@ class DbManager(_dbCreator: DbCreator) {
                 return@withContext dataList
             }
 
-
     fun removeItemFromHiddenFragment(note: Note) {
         insertToTrashTable(note)
         val selection = BaseColumns._ID + "=${note.id}"
