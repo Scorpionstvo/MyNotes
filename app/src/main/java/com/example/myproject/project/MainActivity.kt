@@ -28,8 +28,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        startNotesFragment()
-
+        if (savedInstanceState == null) startNotesFragment()
     }
 
     private fun startNotesFragment() {
@@ -86,7 +85,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-     fun putPictureFromGallery() {
+    fun putPictureFromGallery() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         if (intent.resolveActivity(packageManager) != null) {
