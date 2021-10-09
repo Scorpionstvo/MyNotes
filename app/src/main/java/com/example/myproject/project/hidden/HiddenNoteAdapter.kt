@@ -78,6 +78,7 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
             checked.add(false)
         }
         holder.itemView.setOnClickListener {
+            val typeName = noteList[holder.absoluteAdapterPosition].typeName
             val title = noteList[holder.absoluteAdapterPosition].title
             val content = noteList[holder.absoluteAdapterPosition].content
             val time = noteList[holder.absoluteAdapterPosition].editTime
@@ -85,7 +86,7 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
             val elementPosition = holder.absoluteAdapterPosition
             val isTop = noteList[holder.absoluteAdapterPosition].isTop
             val wallpaperName = noteList[holder.absoluteAdapterPosition].wallpaperName
-            val note = Note(title, content, id, time, isTop, wallpaperName)
+            val note = Note(typeName, title, content, id, time, isTop, wallpaperName)
             showDetailListener.onClickElement(note, elementPosition)
             if (isVisible) {
                 checked[position] = !checked[position]

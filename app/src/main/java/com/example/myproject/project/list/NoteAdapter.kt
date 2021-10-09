@@ -36,7 +36,6 @@ class NoteAdapter(_showDetail: ShowDetail) : RecyclerView.Adapter<NoteAdapter.No
         val checkBox: CheckBox = item.findViewById(R.id.checkRec)
         private val pin: ImageView = item.findViewById(R.id.imTop)
 
-
         fun initNote(note: Note) {
             tvTitle.text = note.title
             tvContent.text = note.content
@@ -81,6 +80,7 @@ class NoteAdapter(_showDetail: ShowDetail) : RecyclerView.Adapter<NoteAdapter.No
             checked.add(false)
         }
         holder.itemView.setOnClickListener {
+            val typeName = noteList[holder.absoluteAdapterPosition].typeName
             val title = noteList[holder.absoluteAdapterPosition].title
             val content = noteList[holder.absoluteAdapterPosition].content
             val time = noteList[holder.absoluteAdapterPosition].editTime
@@ -88,7 +88,7 @@ class NoteAdapter(_showDetail: ShowDetail) : RecyclerView.Adapter<NoteAdapter.No
             val elementPosition = holder.absoluteAdapterPosition
             val isTop = noteList[holder.absoluteAdapterPosition].isTop
             val wallpaperName = noteList[holder.absoluteAdapterPosition].wallpaperName
-            val note = Note(title, content, id, time, isTop, wallpaperName)
+            val note = Note(typeName, title, content, id, time, isTop, wallpaperName)
             showDetail.onClickElement(note, elementPosition)
             if (isVisible) {
                 checked[position] = !checked[position]
