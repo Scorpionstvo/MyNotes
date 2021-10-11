@@ -7,6 +7,7 @@ import android.view.*
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
@@ -355,6 +356,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
     }
 
     override fun onBackPressed(): Boolean {
+        setFragmentResult("")
         return if (binding!!.fbAdd.visibility == View.GONE) {
             binding!!.fbAdd.visibility = View.VISIBLE
             binding!!.btMenuNotes.visibility = View.GONE
