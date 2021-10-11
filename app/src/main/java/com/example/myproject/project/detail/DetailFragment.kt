@@ -5,6 +5,7 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
 import android.view.*
+import android.widget.Toast
 import androidx.core.net.toUri
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.activityViewModels
@@ -13,6 +14,7 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.currentnote.*
 import com.example.currentnote.databinding.FragmentDetailBinding
 import com.example.myproject.project.MainActivity
+import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
@@ -49,6 +51,8 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
     }
 
     override fun onResume() {
+        val type = Type.IS_NORMAL
+        type.name
         super.onResume()
         dbManager.openDb()
     }
@@ -115,17 +119,14 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         val isTop = note.isTop
         val now = getCurrentTime()
         if (isNew) {
-            val newNote = Note(savedTitle, savedContent, 0, now, isTop, wallpaperName)
+            val newNote = Note(Type.IS_NORMAL.name, savedTitle, savedContent, 0, now, isTop, wallpaperName)
             if (savedTitle.isEmpty() && savedContent.isEmpty()) return
             dbManager.insertToTable(newNote)
             isNew = false
         } else {
             if (savedTitle != note.title || savedContent != note.content || wallpaperName != note.wallpaperName) {
-                val editNote = Note(savedTitle, savedContent, note.id, now, isTop, wallpaperName)
-                when (callerFragment) {
-                    Constants.NOTES_FRAGMENT -> dbManager.updateItem(editNote)
-                    Constants.HIDDEN_FRAGMENT -> dbManager.updateToHiddenTable(editNote)
-                }
+                val editNote = Note(note.typeName, savedTitle, savedContent, note.id, now, isTop, wallpaperName)
+                    dbManager.updateItem(editNote)
             }
         }
     }
@@ -136,7 +137,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         val savedContent = binding!!.etContent.text.toString()
         val time = if (savedTitle != note.title || savedContent != note.content) getCurrentTime(
         ) else note.editTime
-        val deleteNote = Note(savedTitle, savedContent, note.id, time, note.isTop, wallpaperName)
+        val deleteNote = Note(note.typeName, savedTitle, savedContent, note.id, time, note.isTop, wallpaperName)
         dbManager.removeItem(deleteNote)
     }
 
@@ -153,7 +154,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
                     (activity as MainActivity).putPictureFromGallery()
                 }
                 R.id.check -> {
-
+Toast.makeText(context, "${note.typeName}", Toast.LENGTH_LONG).show()
                 }
                 R.id.changeBackground -> {
                     binding?.rcWallpapers?.visibility = View.VISIBLE

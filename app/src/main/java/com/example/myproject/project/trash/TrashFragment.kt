@@ -13,6 +13,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentTrashBinding
+import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
 import kotlinx.coroutines.CoroutineScope
@@ -20,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import java.util.*
-import java.util.Collections.sort
 import kotlin.collections.ArrayList
 
 class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedListener {
@@ -33,15 +33,16 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
     private var isChecked = true
     lateinit var alertDialog: AlertDialog.Builder
     private var job: Job? = null
+    private val type = Type.IS_TRASHED.name
 
     companion object {
         fun newInstance() = TrashFragment()
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         binding = FragmentTrashBinding.inflate(layoutInflater)
         return binding?.root
@@ -65,7 +66,7 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
             nameIconGrid = resources.getString(R.string.grid)
         } else {
             binding!!.rcDeletedList.layoutManager =
-                    StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
             nameIconGrid = resources.getString(R.string.list)
         }
     }
@@ -74,7 +75,7 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
     private fun changeStateRecyclerView(isListView: Boolean): String {
         return if (isListView) {
             binding!!.rcDeletedList.layoutManager =
-                    StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
             resources.getString(R.string.list)
         } else {
             binding!!.rcDeletedList.layoutManager = GridLayoutManager(context, 1)
@@ -96,7 +97,7 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
                     isListView = !isListView
                 }
                 R.id.empty_trash -> {
-                    dbManager.emptyTrash()
+                    dbManager.emptyList(type)
                     fillAdapter("")
                 }
                 R.id.chooseAll -> {
@@ -104,7 +105,7 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
                     isChecked = adapter.getCheckedId().size < trashList.size
                     adapter.allChecked(isChecked)
                     binding?.tvTrashTitle?.text =
-                            resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
+                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
                     val isEnabled = adapter.getCheckedId().size > 0
                     bottomMenuEnable(isEnabled)
                 }
@@ -112,7 +113,6 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
             true
         }
     }
-
 
     private fun initSearchView() {
         binding?.svDeletedNotes?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
@@ -128,11 +128,6 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         })
     }
 
-    private fun restoreNote(note: Note) {
-        dbManager.insertToTable(note)
-        dbManager.removeItemFromTrashCan(note.id.toString())
-    }
-
 
     private fun initBottomNavigationView() {
         binding!!.btMenuTrash.setOnItemSelectedListener {
@@ -140,9 +135,11 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
                 R.id.restore -> {
                     val checkedItems = adapter.getCheckedId()
                     for (i in checkedItems.indices) {
-                        val indexForDelete = checkedItems[i]
-                        val note = trashList[indexForDelete]
-                        restoreNote(note)
+                        val indexForDeclassify = checkedItems[i]
+                        val note = trashList[indexForDeclassify]
+                        note.typeName = Type.IS_NORMAL.name
+                        note.removalTime = 0
+                        dbManager.updateItem(note)
                     }
                     fillAdapter("")
                     goToNormalView()
@@ -152,31 +149,31 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
                     alertDialog = AlertDialog.Builder(activity)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
-                            this.resources.getQuantityString(
-                                    R.plurals.plurals_note_count,
-                                    checkedItems.size, checkedItems.size
-                            )
+                        this.resources.getQuantityString(
+                            R.plurals.plurals_note_count,
+                            checkedItems.size, checkedItems.size
+                        )
                     val message = "${resources.getString(R.string.delete_permanently)} $noteString?"
                     alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
-                            R.string.undo
+                        R.string.undo
                     )
                     { dialog, _ ->
                         dialog.dismiss()
                     }
                     alertDialog.setPositiveButton(
-                            R.string.ok
+                        R.string.ok
                     )
                     { dialog, _ ->
                         for (i in checkedItems.indices) {
                             val indexForDelete = checkedItems[i]
                             val note = trashList[indexForDelete]
-                            dbManager.removeItemFromTrashCan(
-                                    note.id.toString()
+                            dbManager.removeItem(
+                                note
                             )
-
+                            fillAdapter("")
                         }
-                        fillAdapter("")
+
                         dialog.dismiss()
                     }
                     goToNormalView()
@@ -211,18 +208,17 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         val now = Calendar.getInstance()
         now.add(Calendar.DAY_OF_YEAR, -30)
         return calendar.get(Calendar.DAY_OF_YEAR) < now.get(Calendar.DAY_OF_YEAR) || calendar.get(
-                Calendar.YEAR
+            Calendar.YEAR
         ) < now.get(Calendar.YEAR)
     }
 
     private fun fillAdapter(text: String) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
-            trashList = dbManager.readDataFromTrashTable(text)
+            trashList = dbManager.readDataFromTable(text, type)
             for (it in trashList) {
-                if (deleteTimer(it)) dbManager.removeItemFromTrashCan(it.id.toString())
+                if (deleteTimer(it)) dbManager.removeItem(it)
             }
-            sort(trashList)
             adapter.updateAdapter(trashList)
             if (trashList.size > 0) {
                 binding?.tvTrashListEmpty?.visibility = View.GONE

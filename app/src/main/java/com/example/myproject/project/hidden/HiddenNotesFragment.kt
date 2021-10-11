@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentHiddenNotesBinding
+import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
@@ -21,7 +22,7 @@ import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
 class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
-        OnBackPressedListener {
+    OnBackPressedListener {
     private var binding: FragmentHiddenNotesBinding? = null
     private val adapter = HiddenNoteAdapter(this)
     private val dbManager = MyApplication.dbManager
@@ -31,6 +32,8 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
     private var isChecked = true
     private var hiddenList = ArrayList<Note>()
     lateinit var alertDialog: AlertDialog.Builder
+
+    private val type = Type.IS_HIDDEN.name
 
     interface OpenFragment {
         fun openDetailFragment(note: Note, isNew: Boolean, callerFragment: String)
@@ -43,9 +46,9 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
     }
 
     override fun onCreateView(
-            inflater: LayoutInflater,
-            container: ViewGroup?,
-            savedInstanceState: Bundle?
+        inflater: LayoutInflater,
+        container: ViewGroup?,
+        savedInstanceState: Bundle?
     ): View? {
         binding = FragmentHiddenNotesBinding.inflate(layoutInflater)
         return binding?.root
@@ -94,7 +97,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
                     adapter.allChecked(isChecked)
 
                     binding!!.tvHiddenNotesTitle.text =
-                            resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
+                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
 
                     val isEnabled = adapter.getCheckedId().size > 0
                     bottomMenuEnable(isEnabled)
@@ -130,54 +133,57 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
                 R.id.declassify -> {
                     val checkedItems = adapter.getCheckedId()
                     for (i in checkedItems.indices) {
-                        val indexForDelete = checkedItems[i]
-                        val note = hiddenList[indexForDelete]
-                        dbManager.insertToTable(note)
-                        dbManager.removeItemFromHiddenFragment(note)
+                        val indexForDeclassify = checkedItems[i]
+                        val note = hiddenList[indexForDeclassify]
+                        note.typeName = Type.IS_NORMAL.name
+                        dbManager.updateItem(note)
                     }
                     fillAdapter("")
                     goToNormalView()
                 }
-                R.id.deleteNotes -> {
+                R.id.delete -> {
                     val checkedItems = adapter.getCheckedId()
-                    alertDialog = AlertDialog.Builder(activity)
+                    alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
-                            this.resources.getQuantityString(
-                                    R.plurals.plurals_note_count,
-                                    checkedItems.size, checkedItems.size
-                            )
+                        this.resources.getQuantityString(
+                            R.plurals.plurals_note_count,
+                            checkedItems.size,
+                            checkedItems.size
+                        )
                     val message = "${resources.getString(R.string.delete)} $noteString?"
                     alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
-                            R.string.undo
+                        R.string.undo
                     ) { dialog, _ ->
                         dialog.dismiss()
                     }
                     alertDialog.setPositiveButton(
-                            R.string.ok
+                        R.string.ok
                     ) { dialog, _ ->
                         for (i in checkedItems.indices) {
                             val indexForDelete = checkedItems[i]
                             val note = hiddenList[indexForDelete]
-                            dbManager.removeItemFromHiddenFragment(
-                                    note
-                            )
+                            moveToTrash(note)
                             fillAdapter("")
                         }
                         dialog.dismiss()
                     }
-
                     goToNormalView()
                     val alert = alertDialog.create()
                     alert.show()
                 }
             }
             true
-
         }
     }
 
+
+    private fun moveToTrash(note: Note) {
+        note.typeName = Type.IS_TRASHED.name
+        note.removalTime = System.currentTimeMillis()
+        dbManager.updateItem(note)
+    }
 
     private fun goToNormalView() {
         binding?.btMenuHiddenNotes?.visibility = View.GONE
@@ -212,7 +218,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         }
     }
 
-
     override fun onLongClickElement() {
         binding?.btMenuHiddenNotes?.visibility = View.VISIBLE
         binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.select_objects)
@@ -244,8 +249,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
     private fun fillAdapter(text: String) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
-            hiddenList = dbManager.readDataFromHiddenTable(text)
-            hiddenList.sort()
+            hiddenList = dbManager.readDataFromTable(text, type)
             adapter.updateAdapter(hiddenList)
             if (hiddenList.isNotEmpty()) {
                 binding?.tvHiddenListEmpty?.visibility = View.GONE
@@ -260,7 +264,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         return if (binding?.btMenuHiddenNotes?.visibility == View.VISIBLE) {
             binding?.btMenuHiddenNotes?.visibility = View.GONE
             binding?.tvHiddenNotesTitle?.text =
-                    resources.getString(R.string.title_toolbar_hidden_notes)
+                resources.getString(R.string.title_toolbar_hidden_notes)
             adapter.isShowCheckBox(false)
             binding?.tbHiddenNotes?.menu?.clear()
             binding?.tbHiddenNotes?.inflateMenu(R.menu.hidden_toolbar_menu)
