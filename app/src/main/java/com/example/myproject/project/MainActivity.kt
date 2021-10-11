@@ -29,7 +29,6 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
         startNotesFragment()
-
     }
 
     private fun startNotesFragment() {

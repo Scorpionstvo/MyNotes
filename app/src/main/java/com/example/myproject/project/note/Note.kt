@@ -4,25 +4,28 @@ import android.os.Parcel
 import android.os.Parcelable
 
 class Note(
-    val title: String = "",
-    val content: String = "",
-    val id: Int = 0,
-    var editTime: String = "",
-    var isTop: Boolean = false,
-    val wallpaperName: String? = null,
-    var removalTime: Long = 0
+        var typeName: String,
+        val title: String = "",
+        val content: String = "",
+        val id: Int = 0,
+        var editTime: String = "",
+        var isTop: Boolean = false,
+        val wallpaperName: String? = null,
+        var removalTime: Long = 0
 ) : Parcelable, Comparable<Note> {
     constructor(parcel: Parcel) : this(
-        parcel.readString().toString(),
-        parcel.readString().toString(),
-        parcel.readInt(),
-        parcel.readString().toString(),
-        parcel.readByte() != 0.toByte(),
-        parcel.readString(),
-        parcel.readLong()
+            parcel.readString().toString(),
+            parcel.readString().toString(),
+            parcel.readString().toString(),
+            parcel.readInt(),
+            parcel.readString().toString(),
+            parcel.readByte() != 0.toByte(),
+            parcel.readString(),
+            parcel.readLong()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
+        parcel.writeString(typeName)
         parcel.writeString(title)
         parcel.writeString(content)
         parcel.writeInt(id)
