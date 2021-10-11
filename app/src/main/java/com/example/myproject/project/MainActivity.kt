@@ -86,7 +86,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
         super.onActivityResult(requestCode, resultCode, data)
     }
 
-     fun putPictureFromGallery() {
+    fun putPictureFromGallery() {
         val intent = Intent(Intent.ACTION_GET_CONTENT)
         intent.type = "image/*"
         if (intent.resolveActivity(packageManager) != null) {
@@ -96,7 +96,6 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
             )
         }
     }
-
 
     override fun onBackPressed() {
         for (fragment: Fragment in supportFragmentManager.fragments) {
