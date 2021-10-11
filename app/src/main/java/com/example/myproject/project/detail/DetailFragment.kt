@@ -1,14 +1,17 @@
 package com.example.myproject.project.detail
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
 import android.view.*
-import androidx.core.net.toUri
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.annotation.RequiresApi
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.currentnote.*
 import com.example.currentnote.databinding.FragmentDetailBinding
@@ -16,7 +19,6 @@ import com.example.myproject.project.MainActivity
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
-import com.example.myproject.project.model.DataModel
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.myproject.project.wallpaper.Wallpaper
 import com.example.myproject.project.wallpaper.WallpaperAdapter
@@ -27,15 +29,13 @@ import kotlin.collections.ArrayList
 class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPressedListener {
     private var binding: FragmentDetailBinding? = null
     private val dbManager = MyApplication.dbManager
-    private val dataModel: DataModel by activityViewModels()
     lateinit var note: Note
     lateinit var callerFragment: String
     private val wallpapers: ArrayList<Wallpaper> = ArrayList(EnumSet.allOf(Wallpaper::class.java))
     lateinit var adapter: WallpaperAdapter
     var isNew = false
-    private val uriImages = ArrayList<String>()
+    private val uriList = ArrayList<Uri>()
     private var wallpaperName: String? = null
-
 
     companion object {
         fun newInstance(params: DetailFragmentParams) = DetailFragment().apply {
@@ -65,9 +65,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        dataModel.imageUri.observe(activity as LifecycleOwner) {
-            addImage(it)
-        }
         adapter = WallpaperAdapter(this, wallpapers)
         initNote()
         initToolbar()
@@ -81,7 +78,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         wallpaperName = note.wallpaperName
         if (wallpaperName != null) onClickElement(Wallpaper.valueOf(wallpaperName.toString()))
     }
-
 
     private fun initToolbar() {
         binding?.tbDetail?.setNavigationIcon(R.drawable.ic_back)
@@ -108,7 +104,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         }
     }
 
-
     private fun saveNote() {
         val savedTitle = binding!!.etTitle.text.toString()
         val savedContent = binding!!.etContent.text.toString()
@@ -130,7 +125,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         }
     }
 
-
     private fun deleteNote() {
         val savedTitle = binding!!.etTitle.text.toString()
         val savedContent = binding!!.etContent.text.toString()
@@ -150,7 +144,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         binding!!.bnvDetail.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.addImage -> {
-                    (activity as MainActivity).putPictureFromGallery()
+                    putPictureFromGallery()
                 }
                 R.id.check -> {
 
@@ -163,8 +157,27 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         }
     }
 
-    private fun addImage(uri: String) {
-        val imageUri = uri.toUri()
+    private fun putPictureFromGallery() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        intent.type = "image/*"
+        resultLauncher.launch(intent)
+    }
+
+
+    private val resultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val imageUri = result.data?.data
+                context?.contentResolver?.takePersistableUriPermission(
+                    imageUri!!,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                if (imageUri != null) addImage(imageUri)
+            }
+        }
+
+    private fun addImage(imageUri: Uri) {
+        uriList.add(imageUri)
         val imageSpan = context?.let { it -> ImageSpan(it, imageUri) }
         val builder = SpannableStringBuilder()
         builder.append(binding!!.etContent.text)
@@ -172,12 +185,12 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         builder.replace(
             binding!!.etContent.selectionStart,
             binding!!.etContent.selectionEnd,
-            uri
+            imageUri.toString()
         )
         builder.setSpan(
             imageSpan,
             selStart,
-            selStart + uri.length,
+            selStart + imageUri.toString().length,
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         binding!!.etContent.text = builder
@@ -223,8 +236,8 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
             binding!!.rcWallpapers.setBackgroundResource(wallpaper.secondaryBackground)
             wallpaperName = wallpaper.name
         }
-
     }
+
 }
 
 
