@@ -356,7 +356,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
     }
 
     override fun onBackPressed(): Boolean {
-        setFragmentResult("")
         return if (binding!!.fbAdd.visibility == View.GONE) {
             binding!!.fbAdd.visibility = View.VISIBLE
             binding!!.btMenuNotes.visibility = View.GONE
