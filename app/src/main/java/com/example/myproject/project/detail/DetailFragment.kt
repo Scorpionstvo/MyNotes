@@ -35,7 +35,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
     private val uriList = ArrayList<Uri>()
     private var wallpaperName: String? = null
 
-
     companion object {
         fun newInstance(params: DetailFragmentParams) = DetailFragment().apply {
             arguments = Bundle().apply {
@@ -249,7 +248,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
             binding!!.rcWallpapers.setBackgroundResource(wallpaper.secondaryBackground)
             wallpaperName = wallpaper.name
         }
-
     }
 }
 
