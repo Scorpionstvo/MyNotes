@@ -1,6 +1,5 @@
 package com.example.myproject.project.trash
 
-import android.annotation.SuppressLint
 import android.app.AlertDialog
 import android.os.Bundle
 import androidx.fragment.app.Fragment
@@ -8,9 +7,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
+import androidx.activity.OnBackPressedCallback
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentTrashBinding
 import com.example.myproject.project.type.Type
@@ -23,7 +22,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 
-class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedListener {
+class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
     private var binding: FragmentTrashBinding? = null
     private var trashList = ArrayList<Note>()
     private var adapter = TrashAdapter(this)
@@ -55,10 +54,8 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         initToolbar()
         initSearchView()
         initBottomNavigationView()
-        dbManager.openDb()
-        fillAdapter("")
+        initOnBackPressedListener()
     }
-
 
     private fun recyclerViewStateCreated() {
         if (isListView) {
@@ -71,7 +68,6 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         }
     }
 
-
     private fun changeStateRecyclerView(isListView: Boolean): String {
         return if (isListView) {
             binding!!.rcDeletedList.layoutManager =
@@ -83,7 +79,6 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun initToolbar() {
         binding!!.tbTrashCan.menu.findItem(R.id.list).title = nameIconGrid
         binding!!.tbTrashCan.setNavigationIcon(R.drawable.ic_back)
@@ -194,12 +189,6 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         adapter.isShowCheckBox(false)
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        dbManager.closeDb()
-        binding = null
-    }
-
 
     private fun deleteTimer(note: Note): Boolean {
         val calendar = Calendar.getInstance()
@@ -262,16 +251,28 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         fillAdapter("")
     }
 
-    override fun onBackPressed(): Boolean {
-        return if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
-            binding?.btMenuTrash?.visibility = View.GONE
-            binding?.tvTrashTitle?.text = resources.getString(R.string.title_toolbar_trash_fragment)
-            adapter.isShowCheckBox(false)
-            binding?.tbTrashCan?.menu?.clear()
-            binding?.tbTrashCan?.inflateMenu(R.menu.trash_toolbar_menu)
-            false
-        } else true
+    private fun initOnBackPressedListener() {
+        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
+                    binding?.btMenuTrash?.visibility = View.GONE
+                    binding?.tvTrashTitle?.text =
+                        resources.getString(R.string.title_toolbar_trash_fragment)
+                    adapter.isShowCheckBox(false)
+                    binding?.tbTrashCan?.menu?.clear()
+                    binding?.tbTrashCan?.inflateMenu(R.menu.trash_toolbar_menu)
+                } else {
+                    isEnabled = false
+                    activity?.onBackPressed()
+                }
+            }
+        })
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        dbManager.closeDb()
+        binding = null
+    }
 
 }

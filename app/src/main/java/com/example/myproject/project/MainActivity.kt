@@ -12,7 +12,6 @@ import com.example.myproject.project.note.Note
 import com.example.myproject.project.password.PasswordFragment
 import com.example.myproject.project.password.PasswordFragmentParams
 import com.example.myproject.project.trash.TrashFragment
-import com.example.myproject.project.util.OnBackPressedListener
 
 
 class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFragment.OpenFragment,
@@ -55,16 +54,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
 
     override fun openPasswordFragment(isDataChange: Boolean) {
         val dialog = PasswordFragment.newInstance(PasswordFragmentParams(isDataChange))
-        dialog.show(supportFragmentManager, "passwordFragment")
-    }
-
-
-    override fun onBackPressed() {
-        for (fragment: Fragment in supportFragmentManager.fragments) {
-            if (fragment is OnBackPressedListener) {
-                if (fragment.onBackPressed()) super.onBackPressed()
-            }
-        }
+        dialog.show(supportFragmentManager, Fragment::class.simpleName)
     }
 
 }

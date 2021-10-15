@@ -8,6 +8,7 @@ import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
 import android.view.*
+import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -17,14 +18,13 @@ import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
-import com.example.myproject.project.util.OnBackPressedListener
 import com.example.myproject.project.wallpaper.Wallpaper
 import com.example.myproject.project.wallpaper.WallpaperAdapter
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.ArrayList
 
-class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPressedListener {
+class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
     private var binding: FragmentDetailBinding? = null
     private val dbManager = MyApplication.dbManager
     lateinit var note: Note
@@ -56,7 +56,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         binding = FragmentDetailBinding.inflate(layoutInflater)
         return binding?.root
     }
@@ -68,6 +67,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         initToolbar()
         initBottomNavigationView()
         initRecyclerView()
+        initOnBackPressedListener()
     }
 
     private fun initNote() {
@@ -76,7 +76,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         wallpaperName = note.wallpaperName
         if (wallpaperName != null) onClickElement(Wallpaper.valueOf(wallpaperName.toString()))
     }
-
 
     private fun initToolbar() {
         binding?.tbDetail?.setNavigationIcon(R.drawable.ic_back)
@@ -223,11 +222,17 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         binding = null
     }
 
-    override fun onBackPressed(): Boolean {
-        return if (binding?.rcWallpapers?.visibility == View.VISIBLE) {
-            binding?.rcWallpapers?.visibility = View.GONE
-            false
-        } else true
+    private fun initOnBackPressedListener() {
+        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding?.rcWallpapers?.visibility == View.VISIBLE) {
+                    binding?.rcWallpapers?.visibility = View.GONE
+                } else {
+                    isEnabled = false
+                    activity?.onBackPressed()
+                }
+            }
+        })
     }
 
     override fun onClickElement(wallpaper: Wallpaper) {

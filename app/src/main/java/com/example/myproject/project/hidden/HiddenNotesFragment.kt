@@ -6,9 +6,9 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
-import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentHiddenNotesBinding
 import com.example.myproject.project.type.Type
@@ -21,8 +21,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
-class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
-    OnBackPressedListener {
+class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
     private var binding: FragmentHiddenNotesBinding? = null
     private val adapter = HiddenNoteAdapter(this)
     private val dbManager = MyApplication.dbManager
@@ -61,6 +60,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         initToolbar()
         initSearchView()
         initBottomNavigationView()
+        initOnBackPressedListener()
     }
 
     private fun recyclerViewStateCreated() {
@@ -72,7 +72,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
             nameIconGrid = resources.getString(R.string.list)
         }
     }
-
 
     private fun changeStateRecyclerView(isListView: Boolean): String {
         return if (isListView) {
@@ -111,7 +110,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         }
     }
 
-
     private fun initSearchView() {
         binding?.svHiddenNotes?.setOnQueryTextListener(object : SearchView.OnQueryTextListener {
 
@@ -125,7 +123,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
             }
         })
     }
-
 
     private fun initBottomNavigationView() {
         binding!!.btMenuHiddenNotes.setOnItemSelectedListener {
@@ -178,7 +175,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         }
     }
 
-
     private fun moveToTrash(note: Note) {
         note.typeName = Type.IS_TRASHED.name
         note.removalTime = System.currentTimeMillis()
@@ -197,7 +193,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         super.onResume()
         dbManager.openDb()
         fillAdapter("")
-
     }
 
     override fun onClickElement(note: Note?, position: Int) {
@@ -239,13 +234,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         }
     }
 
-
-    override fun onDestroy() {
-        dbManager.closeDb()
-        binding = null
-        super.onDestroy()
-    }
-
     private fun fillAdapter(text: String) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
@@ -257,19 +245,30 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
                 binding?.tvHiddenListEmpty?.visibility = View.VISIBLE
             }
         }
-
     }
 
-    override fun onBackPressed(): Boolean {
-        return if (binding?.btMenuHiddenNotes?.visibility == View.VISIBLE) {
-            binding?.btMenuHiddenNotes?.visibility = View.GONE
-            binding?.tvHiddenNotesTitle?.text =
-                resources.getString(R.string.title_toolbar_hidden_notes)
-            adapter.isShowCheckBox(false)
-            binding?.tbHiddenNotes?.menu?.clear()
-            binding?.tbHiddenNotes?.inflateMenu(R.menu.hidden_toolbar_menu)
-            false
-        } else true
+    private fun initOnBackPressedListener() {
+        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding?.btMenuHiddenNotes?.visibility == View.VISIBLE) {
+                    binding?.btMenuHiddenNotes?.visibility = View.GONE
+                    binding?.tvHiddenNotesTitle?.text =
+                        resources.getString(R.string.title_toolbar_hidden_notes)
+                    adapter.isShowCheckBox(false)
+                    binding?.tbHiddenNotes?.menu?.clear()
+                    binding?.tbHiddenNotes?.inflateMenu(R.menu.hidden_toolbar_menu)
+                } else {
+                    isEnabled = false
+                    activity?.onBackPressed()
+                }
+            }
+        })
+    }
+
+    override fun onDestroy() {
+        dbManager.closeDb()
+        binding = null
+        super.onDestroy()
     }
 
 }

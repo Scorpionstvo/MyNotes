@@ -6,11 +6,10 @@ import android.os.Bundle
 import android.view.*
 import android.widget.SearchView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentNotesBinding
 import com.example.myproject.project.type.Type
@@ -23,7 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
-class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener {
+class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
     private var binding: FragmentNotesBinding? = null
     private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
@@ -67,8 +66,8 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
         initSearchView()
         initButton()
         initBottomNavigationView()
+        initOnBackPressedListener()
     }
-
 
     private fun recyclerViewStateCreated() {
         val share =
@@ -277,7 +276,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
         super.onResume()
         dbManager.openDb()
         fillAdapter("")
-
     }
 
     override fun onClickElement(note: Note?, position: Int) {
@@ -326,21 +324,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
         }
     }
 
-
-    override fun onDestroy() {
-        val savedVariant =
-            activity?.getSharedPreferences(
-                Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
-                Context.MODE_PRIVATE
-            )
-                ?.edit()
-        savedVariant?.putBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, isListView)
-        savedVariant?.apply()
-        dbManager.closeDb()
-        binding = null
-        super.onDestroy()
-    }
-
     private fun fillAdapter(text: String) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
@@ -355,16 +338,36 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
 
     }
 
-    override fun onBackPressed(): Boolean {
-        return if (binding!!.fbAdd.visibility == View.GONE) {
-            binding!!.fbAdd.visibility = View.VISIBLE
-            binding!!.btMenuNotes.visibility = View.GONE
-            binding!!.tvTitle.text = ""
-            adapter.isShowCheckBox(false)
-            binding!!.tbNotes.menu?.clear()
-            binding!!.tbNotes.inflateMenu(R.menu.notes_toolbar_menu)
-            false
-        } else true
+    private fun initOnBackPressedListener() {
+        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding!!.fbAdd.visibility == View.GONE) {
+                    binding!!.fbAdd.visibility = View.VISIBLE
+                    binding!!.btMenuNotes.visibility = View.GONE
+                    binding!!.tvTitle.text = ""
+                    adapter.isShowCheckBox(false)
+                    binding!!.tbNotes.menu?.clear()
+                    binding!!.tbNotes.inflateMenu(R.menu.notes_toolbar_menu)
+                } else {
+                    isEnabled = false
+                    activity?.onBackPressed()
+                }
+            }
+        })
+    }
+
+    override fun onDestroy() {
+        val savedVariant =
+            activity?.getSharedPreferences(
+                Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
+                Context.MODE_PRIVATE
+            )
+                ?.edit()
+        savedVariant?.putBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, isListView)
+        savedVariant?.apply()
+        dbManager.closeDb()
+        binding = null
+        super.onDestroy()
     }
 
 }
