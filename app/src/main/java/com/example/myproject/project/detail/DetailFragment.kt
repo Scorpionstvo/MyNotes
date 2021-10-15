@@ -1,24 +1,22 @@
 package com.example.myproject.project.detail
 
+import android.app.Activity
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.text.Spannable
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
 import android.view.*
-import android.widget.Toast
-import androidx.core.net.toUri
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.activityViewModels
-import androidx.lifecycle.LifecycleOwner
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.currentnote.*
 import com.example.currentnote.databinding.FragmentDetailBinding
-import com.example.myproject.project.MainActivity
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
-import com.example.myproject.project.model.DataModel
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.myproject.project.wallpaper.Wallpaper
 import com.example.myproject.project.wallpaper.WallpaperAdapter
@@ -29,15 +27,13 @@ import kotlin.collections.ArrayList
 class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPressedListener {
     private var binding: FragmentDetailBinding? = null
     private val dbManager = MyApplication.dbManager
-    private val dataModel: DataModel by activityViewModels()
     lateinit var note: Note
     lateinit var callerFragment: String
     private val wallpapers: ArrayList<Wallpaper> = ArrayList(EnumSet.allOf(Wallpaper::class.java))
     lateinit var adapter: WallpaperAdapter
     var isNew = false
-    private val uriImages = ArrayList<String>()
+    private val uriList = ArrayList<Uri>()
     private var wallpaperName: String? = null
-
 
     companion object {
         fun newInstance(params: DetailFragmentParams) = DetailFragment().apply {
@@ -51,8 +47,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
     }
 
     override fun onResume() {
-        val type = Type.IS_NORMAL
-        type.name
         super.onResume()
         dbManager.openDb()
     }
@@ -69,9 +63,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        dataModel.imageUri.observe(activity as LifecycleOwner) {
-            addImage(it)
-        }
         adapter = WallpaperAdapter(this, wallpapers)
         initNote()
         initToolbar()
@@ -101,7 +92,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
                 R.id.save -> saveNote()
                 R.id.send -> {
                     val message = "${binding!!.etTitle.text} \n ${binding!!.etContent.text}"
-                    (activity as MainActivity).send(message)
+                    send(message)
                 }
                 R.id.delete -> {
                     deleteNote()
@@ -119,25 +110,42 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         val isTop = note.isTop
         val now = getCurrentTime()
         if (isNew) {
-            val newNote = Note(Type.IS_NORMAL.name, savedTitle, savedContent, 0, now, isTop, wallpaperName)
+            val newNote =
+                Note(Type.IS_NORMAL.name, savedTitle, savedContent, 0, now, isTop, wallpaperName)
             if (savedTitle.isEmpty() && savedContent.isEmpty()) return
             dbManager.insertToTable(newNote)
             isNew = false
         } else {
             if (savedTitle != note.title || savedContent != note.content || wallpaperName != note.wallpaperName) {
-                val editNote = Note(note.typeName, savedTitle, savedContent, note.id, now, isTop, wallpaperName)
-                    dbManager.updateItem(editNote)
+                val editNote = Note(
+                    note.typeName,
+                    savedTitle,
+                    savedContent,
+                    note.id,
+                    now,
+                    isTop,
+                    wallpaperName
+                )
+                dbManager.updateItem(editNote)
             }
         }
     }
 
+    private fun send(message: String) {
+        val sendIntent = Intent()
+        sendIntent.action = Intent.ACTION_SEND
+        sendIntent.putExtra(Intent.EXTRA_TEXT, message)
+        sendIntent.type = "text/plain"
+        startActivity(Intent.createChooser(sendIntent, resources.getText(R.string.toSend)))
+    }
 
     private fun deleteNote() {
         val savedTitle = binding!!.etTitle.text.toString()
         val savedContent = binding!!.etContent.text.toString()
         val time = if (savedTitle != note.title || savedContent != note.content) getCurrentTime(
         ) else note.editTime
-        val deleteNote = Note(note.typeName, savedTitle, savedContent, note.id, time, note.isTop, wallpaperName)
+        val deleteNote =
+            Note(note.typeName, savedTitle, savedContent, note.id, time, note.isTop, wallpaperName)
         dbManager.removeItem(deleteNote)
     }
 
@@ -151,10 +159,9 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         binding!!.bnvDetail.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.addImage -> {
-                    (activity as MainActivity).putPictureFromGallery()
+                    putPictureFromGallery()
                 }
                 R.id.check -> {
-Toast.makeText(context, "${note.typeName}", Toast.LENGTH_LONG).show()
                 }
                 R.id.changeBackground -> {
                     binding?.rcWallpapers?.visibility = View.VISIBLE
@@ -164,8 +171,26 @@ Toast.makeText(context, "${note.typeName}", Toast.LENGTH_LONG).show()
         }
     }
 
-    private fun addImage(uri: String) {
-        val imageUri = uri.toUri()
+    private fun putPictureFromGallery() {
+        val intent = Intent(Intent.ACTION_OPEN_DOCUMENT)
+        intent.type = "image/*"
+        resultLauncher.launch(intent)
+    }
+
+    private val resultLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val imageUri = result.data?.data
+                context?.contentResolver?.takePersistableUriPermission(
+                    imageUri!!,
+                    Intent.FLAG_GRANT_READ_URI_PERMISSION
+                )
+                if (imageUri != null) addImage(imageUri)
+            }
+        }
+
+    private fun addImage(imageUri: Uri) {
+        uriList.add(imageUri)
         val imageSpan = context?.let { it -> ImageSpan(it, imageUri) }
         val builder = SpannableStringBuilder()
         builder.append(binding!!.etContent.text)
@@ -173,17 +198,16 @@ Toast.makeText(context, "${note.typeName}", Toast.LENGTH_LONG).show()
         builder.replace(
             binding!!.etContent.selectionStart,
             binding!!.etContent.selectionEnd,
-            uri
+            imageUri.toString()
         )
         builder.setSpan(
             imageSpan,
             selStart,
-            selStart + uri.length,
+            selStart + imageUri.toString().length,
             Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
         )
         binding!!.etContent.text = builder
     }
-
 
     private fun initRecyclerView() {
         binding?.rcWallpapers?.adapter = adapter
@@ -224,7 +248,6 @@ Toast.makeText(context, "${note.typeName}", Toast.LENGTH_LONG).show()
             binding!!.rcWallpapers.setBackgroundResource(wallpaper.secondaryBackground)
             wallpaperName = wallpaper.name
         }
-
     }
 }
 
