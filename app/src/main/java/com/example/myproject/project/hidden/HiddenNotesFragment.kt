@@ -11,6 +11,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentHiddenNotesBinding
+import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
@@ -21,10 +22,10 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
-class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
+class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
     OnBackPressedListener {
     private var binding: FragmentHiddenNotesBinding? = null
-    private val adapter = HiddenNoteAdapter(this)
+    private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
     private var isListView = false
     private var nameIconGrid: String? = null
@@ -57,6 +58,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding!!.rcHiddenList.adapter = adapter
+        fillAdapter("")
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
@@ -197,10 +199,9 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         super.onResume()
         dbManager.openDb()
         fillAdapter("")
-
     }
 
-    override fun onClickElement(note: Note?, position: Int) {
+    override fun onClickItem(note: Note?, position: Int) {
         if (binding?.btMenuHiddenNotes?.visibility == View.GONE) {
             (activity as OpenFragment).openDetailFragment(note!!, false, Constants.HIDDEN_FRAGMENT)
         } else {
@@ -218,7 +219,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener,
         }
     }
 
-    override fun onLongClickElement() {
+    override fun onLongClickItem() {
         binding?.btMenuHiddenNotes?.visibility = View.VISIBLE
         binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.select_objects)
         binding?.tbHiddenNotes?.menu?.clear()

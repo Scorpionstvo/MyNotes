@@ -250,10 +250,3 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         }
     }
 }
-
-
-
-
-
-
-

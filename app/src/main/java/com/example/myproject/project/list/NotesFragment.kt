@@ -7,12 +7,12 @@ import android.view.*
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentNotesBinding
+import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
@@ -23,7 +23,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
-class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener {
+class NotesFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedListener {
     private var binding: FragmentNotesBinding? = null
     private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
@@ -62,6 +62,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding!!.rcList.adapter = adapter
+        fillAdapter("")
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
@@ -280,7 +281,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
 
     }
 
-    override fun onClickElement(note: Note?, position: Int) {
+    override fun onClickItem(note: Note?, position: Int) {
         if (binding!!.fbAdd.visibility == View.VISIBLE) {
             (activity as OpenFragment).openDetailFragment(note!!, false, Constants.NOTES_FRAGMENT)
         } else {
@@ -299,7 +300,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
     }
 
 
-    override fun onLongClickElement() {
+    override fun onLongClickItem() {
         binding!!.btMenuNotes.visibility = View.VISIBLE
         binding!!.fbAdd.visibility = View.GONE
         binding!!.tvTitle.text = resources.getString(R.string.select_objects)
@@ -352,7 +353,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
                 binding!!.tvGreeting.visibility = View.VISIBLE
             }
         }
-
     }
 
     override fun onBackPressed(): Boolean {

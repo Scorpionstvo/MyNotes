@@ -1,4 +1,4 @@
-package com.example.myproject.project.hidden
+package com.example.myproject.project.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -10,31 +10,29 @@ import androidx.cardview.widget.CardView
 import androidx.recyclerview.widget.RecyclerView
 import com.example.currentnote.R
 import com.example.myproject.project.note.Note
-import com.example.myproject.project.wallpaper.Wallpaper
 import com.example.myproject.project.util.DateFormatter
+import com.example.myproject.project.wallpaper.Wallpaper
 import kotlin.collections.ArrayList
 
-
-class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
-        RecyclerView.Adapter<HiddenNoteAdapter.HiddenNoteHolder>() {
+class NoteAdapter(private val itemClickListener: ItemClickListener) : RecyclerView.Adapter<NoteAdapter.NoteHolder>() {
     private val noteList = ArrayList<Note>()
     private var isVisible = false
     private var checked = ArrayList<Boolean>()
     private val checkList = ArrayList<CheckBox>()
 
-    interface ShowDetailListener {
-        fun onClickElement(note: Note? = null, position: Int = 0)
+    interface ItemClickListener {
+        fun onClickItem(note: Note? = null, position: Int = 0)
 
-        fun onLongClickElement()
+        fun onLongClickItem()
     }
 
-    class HiddenNoteHolder(item: View) : RecyclerView.ViewHolder(item) {
+    class NoteHolder(item: View) : RecyclerView.ViewHolder(item) {
+        private val cardView: CardView = item.findViewById(R.id.cardView)
         private val tvTitle: TextView = item.findViewById(R.id.tvTitleNote)
         private val tvContent: TextView = item.findViewById(R.id.tvContentNote)
         private val tvTime: TextView = item.findViewById(R.id.tvTime)
         val checkBox: CheckBox = item.findViewById(R.id.checkRec)
         private val pin: ImageView = item.findViewById(R.id.imTop)
-        private val cardView: CardView = item.findViewById(R.id.cardView)
 
         fun initNote(note: Note) {
             tvTitle.text = note.title
@@ -43,6 +41,7 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
             if (note.isTop) {
                 pin.visibility = View.VISIBLE
             } else pin.visibility = View.GONE
+
             if (note.wallpaperName != null) {
                 val wallpaper: Wallpaper = Wallpaper.valueOf(note.wallpaperName)
                 tvTitle.setTextColor(wallpaper.textColor)
@@ -53,13 +52,13 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
         }
     }
 
-
-    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): HiddenNoteHolder {
+    override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.my_note_item, parent, false)
-        return HiddenNoteHolder(view)
+        return NoteHolder(view)
     }
 
-    override fun onBindViewHolder(holder: HiddenNoteHolder, position: Int) {
+    override fun onBindViewHolder(holder: NoteHolder, position: Int) {
+
         if (isVisible) {
             checkList.add(holder.checkBox)
             holder.checkBox.visibility = View.VISIBLE
@@ -70,7 +69,7 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
 
         holder.checkBox.setOnClickListener {
             checked[position] = !checked[position]
-            showDetailListener.onClickElement()
+            itemClickListener.onClickItem()
         }
 
         holder.initNote(noteList[position])
@@ -87,19 +86,18 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
             val isTop = noteList[holder.absoluteAdapterPosition].isTop
             val wallpaperName = noteList[holder.absoluteAdapterPosition].wallpaperName
             val note = Note(typeName, title, content, id, time, isTop, wallpaperName)
-            showDetailListener.onClickElement(note, elementPosition)
+            itemClickListener.onClickItem(note, elementPosition)
             if (isVisible) {
                 checked[position] = !checked[position]
                 holder.checkBox.isChecked = checked[position]
-                showDetailListener.onClickElement()
+                itemClickListener.onClickItem()
             }
         }
 
         holder.itemView.setOnLongClickListener {
-            showDetailListener.onLongClickElement()
+            itemClickListener.onLongClickItem()
             true
         }
-
     }
 
     fun allChecked(isChecked: Boolean) {
@@ -117,7 +115,6 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
         return selectedElements
     }
 
-
     fun isShowCheckBox(show: Boolean) {
         isVisible = show
         if (isVisible) {
@@ -125,7 +122,6 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
         }
         notifyDataSetChanged()
     }
-
 
     override fun getItemCount(): Int {
         return noteList.size
@@ -136,4 +132,5 @@ class HiddenNoteAdapter(private val showDetailListener: ShowDetailListener) :
         noteList.addAll(listItems)
         notifyDataSetChanged()
     }
+
 }

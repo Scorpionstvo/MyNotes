@@ -8,11 +8,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
+import android.widget.Toast
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentTrashBinding
+import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
@@ -23,10 +25,10 @@ import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 
-class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedListener {
+class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedListener {
     private var binding: FragmentTrashBinding? = null
     private var trashList = ArrayList<Note>()
-    private var adapter = TrashAdapter(this)
+    private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
     private var isListView = false
     private var nameIconGrid: String? = null
@@ -50,13 +52,13 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding!!.rcDeletedList.adapter = adapter
+        binding?.rcDeletedList?.adapter = adapter
+        fillAdapter("")
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
         initBottomNavigationView()
         dbManager.openDb()
-        fillAdapter("")
     }
 
 
@@ -228,20 +230,23 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice, OnBackPressedList
         }
     }
 
-    override fun clickCheck() {
-        val count = adapter.getCheckedId().size
-        binding?.tvTrashTitle?.text = resources.getString(R.string.selected) + " $count"
-        if (count > 0) bottomMenuEnable(true) else bottomMenuEnable(false)
+    override fun onClickItem(note: Note?, position: Int) {
+        if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
+            val count = adapter.getCheckedId().size
+            binding?.tvTrashTitle?.text = resources.getString(R.string.selected) + " $count"
+            if (count > 0) bottomMenuEnable(true) else bottomMenuEnable(false)
+        } else {
+            Toast.makeText(context, "Невозможно открыть заметку", Toast.LENGTH_LONG).show()
+        }
     }
 
-    override fun onLongClickElement() {
+    override fun onLongClickItem() {
         binding?.btMenuTrash?.visibility = View.VISIBLE
         binding?.tvTrashTitle?.text = resources.getString(R.string.select_objects)
         binding?.tbTrashCan?.menu?.clear()
         binding?.tbTrashCan?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
         if (adapter.getCheckedId().isEmpty()) bottomMenuEnable(false)
-
     }
 
     private fun bottomMenuEnable(isEnabled: Boolean) {
