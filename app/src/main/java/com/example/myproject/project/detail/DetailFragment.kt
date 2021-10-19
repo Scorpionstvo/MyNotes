@@ -89,7 +89,10 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper, OnBackPresse
         }
         binding!!.tbDetail.setOnMenuItemClickListener {
             when (it.itemId) {
-                R.id.save -> saveNote()
+                R.id.save -> {
+                    saveNote()
+                    activity?.onBackPressed()
+                }
                 R.id.send -> {
                     val message = "${binding!!.etTitle.text} \n ${binding!!.etContent.text}"
                     send(message)
