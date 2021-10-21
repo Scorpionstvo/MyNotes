@@ -6,11 +6,10 @@ import android.os.Bundle
 import android.view.*
 import android.widget.SearchView
 import android.widget.Toast
+import androidx.activity.OnBackPressedCallback
 import androidx.fragment.app.Fragment
-import androidx.fragment.app.setFragmentResult
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
-import com.example.myproject.project.util.OnBackPressedListener
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentNotesBinding
 import com.example.myproject.project.type.Type
@@ -23,7 +22,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
-class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener {
+class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
     private var binding: FragmentNotesBinding? = null
     private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
@@ -67,6 +66,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
         initSearchView()
         initButton()
         initBottomNavigationView()
+        initOnBackPressedListener()
     }
 
 
@@ -355,18 +355,22 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail, OnBackPressedListener 
 
     }
 
-    override fun onBackPressed(): Boolean {
-        return if (binding!!.fbAdd.visibility == View.GONE) {
-            binding!!.fbAdd.visibility = View.VISIBLE
-            binding!!.btMenuNotes.visibility = View.GONE
-            binding!!.tvTitle.text = ""
-            adapter.isShowCheckBox(false)
-            binding!!.tbNotes.menu?.clear()
-            binding!!.tbNotes.inflateMenu(R.menu.notes_toolbar_menu)
-            false
-        } else true
+    private fun initOnBackPressedListener() {
+        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+            override fun handleOnBackPressed() {
+                if (binding!!.fbAdd.visibility == View.GONE) {
+                    binding!!.fbAdd.visibility = View.VISIBLE
+                    binding!!.btMenuNotes.visibility = View.GONE
+                    binding!!.tvTitle.text = ""
+                    adapter.isShowCheckBox(false)
+                    binding!!.tbNotes.menu?.clear()
+                    binding!!.tbNotes.inflateMenu(R.menu.notes_toolbar_menu)
+                } else {
+                    isEnabled = false
+                    activity?.onBackPressed()
+                }
+            }
+        })
     }
 
 }
-
-
