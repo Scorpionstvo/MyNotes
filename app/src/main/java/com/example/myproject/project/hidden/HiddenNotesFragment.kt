@@ -58,7 +58,6 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding!!.rcHiddenList.adapter = adapter
-        fillAdapter("")
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
@@ -74,7 +73,6 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
             nameIconGrid = resources.getString(R.string.list)
         }
     }
-
 
     private fun changeStateRecyclerView(isListView: Boolean): String {
         return if (isListView) {
@@ -95,13 +93,15 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
                     isListView = !isListView
                 }
                 R.id.chooseAll -> {
-                    isChecked = adapter.getCheckedId().size < hiddenList.size
+                    val count = adapter.getCheckedCount()
+                    isChecked = count < hiddenList.size
                     adapter.allChecked(isChecked)
 
+                    val newCount = adapter.getCheckedCount()
                     binding!!.tvHiddenNotesTitle.text =
-                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
+                        resources.getString(R.string.selected) + " $newCount"
 
-                    val isEnabled = adapter.getCheckedId().size > 0
+                    val isEnabled = newCount > 0
                     bottomMenuEnable(isEnabled)
 
                 }
@@ -133,18 +133,15 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
         binding!!.btMenuHiddenNotes.setOnItemSelectedListener {
             when (it.itemId) {
                 R.id.declassify -> {
-                    val checkedItems = adapter.getCheckedId()
-                    for (i in checkedItems.indices) {
-                        val indexForDeclassify = checkedItems[i]
-                        val note = hiddenList[indexForDeclassify]
-                        note.typeName = Type.IS_NORMAL.name
-                        dbManager.updateItem(note)
+                    val checkedItems = adapter.getCheckedNotes()
+                    for (i in checkedItems) {
+                       declassify(i)
                     }
                     fillAdapter("")
                     goToNormalView()
                 }
                 R.id.delete -> {
-                    val checkedItems = adapter.getCheckedId()
+                    val checkedItems = adapter.getCheckedNotes()
                     alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
@@ -163,12 +160,11 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
                     alertDialog.setPositiveButton(
                         R.string.ok
                     ) { dialog, _ ->
-                        for (i in checkedItems.indices) {
-                            val indexForDelete = checkedItems[i]
-                            val note = hiddenList[indexForDelete]
-                            moveToTrash(note)
-                            fillAdapter("")
+                        for (i in checkedItems) {
+                            moveToTrash(i)
+
                         }
+                        fillAdapter("")
                         dialog.dismiss()
                     }
                     goToNormalView()
@@ -180,6 +176,11 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
         }
     }
 
+
+    private fun declassify(note: Note) {
+        note.typeName = Type.IS_NORMAL.name
+        dbManager.updateItem(note)
+    }
 
     private fun moveToTrash(note: Note) {
         note.typeName = Type.IS_TRASHED.name
@@ -201,18 +202,18 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
         fillAdapter("")
     }
 
-    override fun onClickItem(note: Note?, position: Int) {
+    override fun onClickItem(note: Note?) {
         if (binding?.btMenuHiddenNotes?.visibility == View.GONE) {
             (activity as OpenFragment).openDetailFragment(note!!, false, Constants.HIDDEN_FRAGMENT)
         } else {
-            val count = adapter.getCheckedId().size
+            val count = adapter.getCheckedCount()
             binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.selected) + " $count"
             if (count > 0) {
                 bottomMenuEnable(true)
-                var isAncor = false
-                for (i in 0 until count) {
-                    val index = adapter.getCheckedId()[i]
-                    if (!hiddenList[index].isTop) isAncor = true
+                var isAnchor = false
+                val checkedItems = adapter.getCheckedNotes()
+                for (i in checkedItems) {
+                    if (!i.isTop) isAnchor = true
                 }
 
             } else bottomMenuEnable(false)
@@ -225,7 +226,7 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener,
         binding?.tbHiddenNotes?.menu?.clear()
         binding?.tbHiddenNotes?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
-        if (adapter.getCheckedId().isEmpty()) {
+        if (adapter.getCheckedNotes().isEmpty()) {
             bottomMenuEnable(false)
         }
     }

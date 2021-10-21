@@ -53,7 +53,6 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.rcDeletedList?.adapter = adapter
-        fillAdapter("")
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
@@ -85,7 +84,6 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
         }
     }
 
-    @SuppressLint("SetTextI18n")
     private fun initToolbar() {
         binding!!.tbTrashCan.menu.findItem(R.id.list).title = nameIconGrid
         binding!!.tbTrashCan.setNavigationIcon(R.drawable.ic_back)
@@ -103,12 +101,13 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
                     fillAdapter("")
                 }
                 R.id.chooseAll -> {
-
-                    isChecked = adapter.getCheckedId().size < trashList.size
+                    val count = adapter.getCheckedCount()
+                    isChecked = count < trashList.size
                     adapter.allChecked(isChecked)
+                    val newCount = adapter.getCheckedCount()
                     binding?.tvTrashTitle?.text =
-                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
-                    val isEnabled = adapter.getCheckedId().size > 0
+                        resources.getString(R.string.selected) + " $newCount"
+                    val isEnabled = newCount > 0
                     bottomMenuEnable(isEnabled)
                 }
             }
@@ -133,21 +132,16 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
 
     private fun initBottomNavigationView() {
         binding!!.btMenuTrash.setOnItemSelectedListener {
+            val checkedItems = adapter.getCheckedNotes()
             when (it.itemId) {
                 R.id.restore -> {
-                    val checkedItems = adapter.getCheckedId()
-                    for (i in checkedItems.indices) {
-                        val indexForDeclassify = checkedItems[i]
-                        val note = trashList[indexForDeclassify]
-                        note.typeName = Type.IS_NORMAL.name
-                        note.removalTime = 0
-                        dbManager.updateItem(note)
+                    for (i in checkedItems) {
+                        restore(i)
                     }
                     fillAdapter("")
                     goToNormalView()
                 }
                 R.id.delete_permanently -> {
-                    val checkedItems = adapter.getCheckedId()
                     alertDialog = AlertDialog.Builder(activity)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
@@ -167,15 +161,10 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
                         R.string.ok
                     )
                     { dialog, _ ->
-                        for (i in checkedItems.indices) {
-                            val indexForDelete = checkedItems[i]
-                            val note = trashList[indexForDelete]
-                            dbManager.removeItem(
-                                note
-                            )
-                            fillAdapter("")
+                        for (i in checkedItems) {
+                            deletePermanently(i)
                         }
-
+                        fillAdapter("")
                         dialog.dismiss()
                     }
                     goToNormalView()
@@ -187,6 +176,15 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
         }
     }
 
+    private fun restore(note: Note) {
+        note.typeName = Type.IS_NORMAL.name
+        note.removalTime = 0
+        dbManager.updateItem(note)
+    }
+
+    private fun deletePermanently(note: Note) {
+        dbManager.removeItem(note)
+    }
 
     private fun goToNormalView() {
         binding?.btMenuTrash?.visibility = View.GONE
@@ -230,9 +228,9 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
         }
     }
 
-    override fun onClickItem(note: Note?, position: Int) {
+    override fun onClickItem(note: Note?) {
         if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
-            val count = adapter.getCheckedId().size
+            val count = adapter.getCheckedCount()
             binding?.tvTrashTitle?.text = resources.getString(R.string.selected) + " $count"
             if (count > 0) bottomMenuEnable(true) else bottomMenuEnable(false)
         } else {
@@ -246,7 +244,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener, OnBackPressedLi
         binding?.tbTrashCan?.menu?.clear()
         binding?.tbTrashCan?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
-        if (adapter.getCheckedId().isEmpty()) bottomMenuEnable(false)
+        if (adapter.getCheckedNotes().isEmpty()) bottomMenuEnable(false)
     }
 
     private fun bottomMenuEnable(isEnabled: Boolean) {

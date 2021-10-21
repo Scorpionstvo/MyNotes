@@ -12,16 +12,18 @@ import com.example.currentnote.R
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.DateFormatter
 import com.example.myproject.project.wallpaper.Wallpaper
+import java.util.*
 import kotlin.collections.ArrayList
 
-class NoteAdapter(private val itemClickListener: ItemClickListener) : RecyclerView.Adapter<NoteAdapter.NoteHolder>() {
+class NoteAdapter(private val itemClickListener: ItemClickListener) :
+    RecyclerView.Adapter<NoteAdapter.NoteHolder>() {
     private val noteList = ArrayList<Note>()
     private var isVisible = false
     private var checked = ArrayList<Boolean>()
-    private val checkList = ArrayList<CheckBox>()
+    private var checkedNotes = LinkedList<Note>()
 
     interface ItemClickListener {
-        fun onClickItem(note: Note? = null, position: Int = 0)
+        fun onClickItem(note: Note? = null)
 
         fun onLongClickItem()
     }
@@ -50,7 +52,9 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) : RecyclerVi
                 tvTime.setTextColor(wallpaper.textColor)
             }
         }
+
     }
+
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): NoteHolder {
         val view = LayoutInflater.from(parent.context).inflate(R.layout.my_note_item, parent, false)
@@ -58,39 +62,38 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) : RecyclerVi
     }
 
     override fun onBindViewHolder(holder: NoteHolder, position: Int) {
+        bind(holder, position)
+    }
 
+    private fun bind(holder: NoteHolder, position: Int) {
         if (isVisible) {
-            checkList.add(holder.checkBox)
             holder.checkBox.visibility = View.VISIBLE
             holder.checkBox.isChecked = checked[position]
         } else {
             holder.checkBox.visibility = View.GONE
         }
 
-        holder.checkBox.setOnClickListener {
-            checked[position] = !checked[position]
-            itemClickListener.onClickItem()
-        }
-
         holder.initNote(noteList[position])
         for (i in 0 until itemCount) {
             checked.add(false)
         }
+
+        holder.checkBox.setOnClickListener {
+            val note = noteList[holder.absoluteAdapterPosition]
+            checked[position] = !checked[position]
+            if (checked[position]) checkedNotes.add(note) else checkedNotes.remove(note)
+            itemClickListener.onClickItem()
+        }
+
         holder.itemView.setOnClickListener {
-            val typeName = noteList[holder.absoluteAdapterPosition].typeName
-            val title = noteList[holder.absoluteAdapterPosition].title
-            val content = noteList[holder.absoluteAdapterPosition].content
-            val time = noteList[holder.absoluteAdapterPosition].editTime
-            val id = noteList[holder.absoluteAdapterPosition].id
-            val elementPosition = holder.absoluteAdapterPosition
-            val isTop = noteList[holder.absoluteAdapterPosition].isTop
-            val wallpaperName = noteList[holder.absoluteAdapterPosition].wallpaperName
-            val note = Note(typeName, title, content, id, time, isTop, wallpaperName)
-            itemClickListener.onClickItem(note, elementPosition)
+            val note = noteList[holder.absoluteAdapterPosition]
             if (isVisible) {
                 checked[position] = !checked[position]
                 holder.checkBox.isChecked = checked[position]
+                if (checked[position]) checkedNotes.add(note) else checkedNotes.remove(note)
                 itemClickListener.onClickItem()
+            } else {
+                itemClickListener.onClickItem(note)
             }
         }
 
@@ -104,21 +107,31 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) : RecyclerVi
         for (i in checked.indices) {
             checked[i] = isChecked
         }
+
+        if (!isChecked) {
+            checkedNotes.clear()
+        } else {
+            for (i in noteList) {
+                if (checkedNotes.contains(i)) continue
+                else checkedNotes.add(i)
+            }
+        }
         notifyDataSetChanged()
     }
 
-    fun getCheckedId(): ArrayList<Int> {
-        val selectedElements = ArrayList<Int>()
-        for (i in 0 until noteList.size) {
-            if (checked[i]) selectedElements.add(i)
-        }
-        return selectedElements
+    fun getCheckedNotes(): LinkedList<Note> {
+        return checkedNotes
+    }
+
+    fun getCheckedCount(): Int {
+        return checkedNotes.size
     }
 
     fun isShowCheckBox(show: Boolean) {
         isVisible = show
         if (isVisible) {
             checked.fill(false)
+            checkedNotes.clear()
         }
         notifyDataSetChanged()
     }
