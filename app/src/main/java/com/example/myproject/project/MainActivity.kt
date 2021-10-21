@@ -21,7 +21,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        startNotesFragment()
+        if (savedInstanceState == null) startNotesFragment()
     }
 
     private fun startNotesFragment() {
