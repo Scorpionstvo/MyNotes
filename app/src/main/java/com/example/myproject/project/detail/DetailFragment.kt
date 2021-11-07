@@ -28,10 +28,9 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
     private var binding: FragmentDetailBinding? = null
     private val dbManager = MyApplication.dbManager
     lateinit var note: Note
-    lateinit var callerFragment: String
     private val wallpapers: ArrayList<Wallpaper> = ArrayList(EnumSet.allOf(Wallpaper::class.java))
-    lateinit var adapter: WallpaperAdapter
-    var isNew = false
+    private val adapter = WallpaperAdapter(this, wallpapers)
+    private var isNew = false
     private val uriList = ArrayList<Uri>()
     private var wallpaperName: String? = null
 
@@ -42,13 +41,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
             }
             note = params.note
             isNew = params.isNew
-            callerFragment = params.callerFragment!!
         }
-    }
-
-    override fun onResume() {
-        super.onResume()
-        dbManager.openDb()
     }
 
     override fun onCreateView(
@@ -56,19 +49,17 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-
         binding = FragmentDetailBinding.inflate(layoutInflater)
         return binding?.root
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        adapter = WallpaperAdapter(this, wallpapers)
         initNote()
         initToolbar()
         initBottomNavigationView()
         initRecyclerView()
-        initOnBackPressedListener()
+        requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
     private fun initNote() {
@@ -77,7 +68,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         wallpaperName = note.wallpaperName
         if (wallpaperName != null) onClickElement(Wallpaper.valueOf(wallpaperName.toString()))
     }
-
 
     private fun initToolbar() {
         binding?.tbDetail?.setNavigationIcon(R.drawable.ic_back)
@@ -91,7 +81,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         binding!!.tbDetail.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.save -> {
-                    saveNote()
+                    saveNote(note.typeName)
                     activity?.onBackPressed()
                 }
                 R.id.send -> {
@@ -99,7 +89,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                     send(message)
                 }
                 R.id.delete -> {
-                    deleteNote()
+                    saveNote(Type.IS_TRASHED.name)
                     activity?.onBackPressed()
                 }
             }
@@ -107,33 +97,34 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         }
     }
 
-
-    private fun saveNote() {
+    private fun saveNote(typeName: String) {
+        if (note.typeName == Type.IS_TRASHED.name) return
         val savedTitle = binding!!.etTitle.text.toString()
         val savedContent = binding!!.etContent.text.toString()
-        val isTop = note.isTop
         val now = getCurrentTime()
         if (isNew) {
-            val newNote =
-                Note(Type.IS_NORMAL.name, savedTitle, savedContent, 0, now, isTop, wallpaperName)
             if (savedTitle.isEmpty() && savedContent.isEmpty()) return
-            dbManager.insertToTable(newNote)
+            note.typeName = typeName
+            note.title = savedTitle
+            note.content = savedContent
+            note.editTime = now
+            note.wallpaperName = wallpaperName
+            if (typeName == Type.IS_TRASHED.name) note.removalTime = System.currentTimeMillis()
+            dbManager.insertToTable(note)
             isNew = false
         } else {
             if (savedTitle != note.title || savedContent != note.content || wallpaperName != note.wallpaperName) {
-                val editNote = Note(
-                    note.typeName,
-                    savedTitle,
-                    savedContent,
-                    note.id,
-                    now,
-                    isTop,
-                    wallpaperName
-                )
-                dbManager.updateItem(editNote)
+                note.editTime = now
             }
+            note.typeName = typeName
+            note.title = savedTitle
+            note.content = savedContent
+            note.wallpaperName = wallpaperName
+            if (typeName == Type.IS_TRASHED.name) note.removalTime = System.currentTimeMillis()
+            dbManager.updateItem(note)
         }
     }
+
 
     private fun send(message: String) {
         val sendIntent = Intent()
@@ -143,15 +134,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         startActivity(Intent.createChooser(sendIntent, resources.getText(R.string.toSend)))
     }
 
-    private fun deleteNote() {
-        val savedTitle = binding!!.etTitle.text.toString()
-        val savedContent = binding!!.etContent.text.toString()
-        val time = if (savedTitle != note.title || savedContent != note.content) getCurrentTime(
-        ) else note.editTime
-        val deleteNote =
-            Note(note.typeName, savedTitle, savedContent, note.id, time, note.isTop, wallpaperName)
-        dbManager.removeItem(deleteNote)
-    }
 
     private fun getCurrentTime(): String {
         val currentTime = Calendar.getInstance().time
@@ -220,24 +202,9 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         binding?.rcWallpapers?.layoutManager = linearLayoutManager
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
-        saveNote()
-        dbManager.closeDb()
-        binding = null
-    }
-
-    private fun initOnBackPressedListener() {
-        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding?.rcWallpapers?.visibility == View.VISIBLE) {
-                    binding?.rcWallpapers?.visibility = View.GONE
-                } else {
-                    isEnabled = false
-                    activity?.onBackPressed()
-                }
-            }
-        })
+    override fun onResume() {
+        super.onResume()
+        dbManager.openDb()
     }
 
     override fun onClickElement(wallpaper: Wallpaper) {
@@ -259,7 +226,31 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
             wallpaperName = wallpaper.name
         }
     }
+
+    private val callback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (binding?.rcWallpapers?.visibility == View.VISIBLE) {
+                binding?.rcWallpapers?.visibility = View.GONE
+            } else {
+                isEnabled = false
+                saveNote(note.typeName)
+                activity?.onBackPressed()
+            }
+        }
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        callback.remove()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dbManager.closeDb()
+        binding = null
+    }
 }
+
 
 
 

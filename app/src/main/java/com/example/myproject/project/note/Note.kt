@@ -4,14 +4,14 @@ import android.os.Parcel
 import android.os.Parcelable
 
 class Note(
-        var typeName: String,
-        val title: String = "",
-        val content: String = "",
-        val id: Int = 0,
-        var editTime: String = "",
-        var isTop: Boolean = false,
-        val wallpaperName: String? = null,
-        var removalTime: Long = 0
+    var typeName: String,
+    var title: String = "",
+    var content: String = "",
+    val id: Int = 0,
+    var editTime: String = "",
+    var isTop: Boolean = false,
+    var wallpaperName: String? = null,
+    var removalTime: Long = 0
 ) : Parcelable, Comparable<Note> {
     constructor(parcel: Parcel) : this(
             parcel.readString().toString(),

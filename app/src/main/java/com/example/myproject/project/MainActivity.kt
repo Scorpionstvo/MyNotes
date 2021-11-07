@@ -28,10 +28,10 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
         ).commit()
     }
 
-    override fun openDetailFragment(note: Note, isNew: Boolean, callerFragment: String) {
+    override fun openDetailFragment(note: Note, isNew: Boolean) {
         supportFragmentManager.beginTransaction().replace(
             R.id.fl_container,
-            DetailFragment.newInstance(DetailFragmentParams(note, isNew, callerFragment))
+            DetailFragment.newInstance(DetailFragmentParams(note, isNew))
         ).addToBackStack(null).commit()
     }
 
@@ -49,6 +49,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
             HiddenNotesFragment.newInstance()
         ).addToBackStack(null).commit()
     }
+
 
     override fun openPasswordFragment(isDataChange: Boolean) {
         val dialog = PasswordFragment.newInstance(PasswordFragmentParams(isDataChange))

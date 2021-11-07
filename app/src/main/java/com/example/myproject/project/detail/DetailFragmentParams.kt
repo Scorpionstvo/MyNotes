@@ -6,19 +6,16 @@ import com.example.myproject.project.note.Note
 
 data class DetailFragmentParams(
         val note: Note,
-        val isNew: Boolean,
-        val callerFragment: String?
+        val isNew: Boolean
 ) : Parcelable {
     constructor(parcel: Parcel) : this(
         parcel.readParcelable(Note::class.java.classLoader)!!,
-        parcel.readByte() != 0.toByte(),
-        parcel.readString()
+        parcel.readByte() != 0.toByte()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeParcelable(note, flags)
         parcel.writeInt(if (isNew) 1 else 0)
-        parcel.writeString(callerFragment)
     }
 
 

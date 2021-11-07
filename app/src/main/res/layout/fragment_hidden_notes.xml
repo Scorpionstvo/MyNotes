@@ -38,6 +38,21 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fbAdd"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/padding_large"
+        android:layout_marginBottom="@dimen/padding_large"
+        android:background="@color/purple_200"
+        android:backgroundTint="@color/purple_200"
+        android:clickable="true"
+        android:contentDescription="@string/add_note"
+        android:focusable="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:srcCompat="@drawable/ic_add" />
+
     <TextView
         android:id="@+id/tvHiddenNotesTitle"
         style="@style/TextViewTitleFragment"
