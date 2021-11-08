@@ -12,6 +12,7 @@ import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentNotesBinding
+import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
@@ -22,7 +23,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
-class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
+class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private var binding: FragmentNotesBinding? = null
     private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
@@ -37,7 +38,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
 
     interface OpenFragment {
 
-        fun openDetailFragment(note: Note, isNew: Boolean, callerFragment: String)
+        fun openDetailFragment(note: Note, isNew: Boolean)
 
         fun openTrashCanFragment()
 
@@ -68,7 +69,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
         initBottomNavigationView()
         initOnBackPressedListener()
     }
-
 
     private fun recyclerViewStateCreated() {
         val share =
@@ -105,7 +105,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                 R.id.list -> {
                     it.title = changeStateRecyclerView(isListView)
                     isListView = !isListView
-
+                    saveTableVariant(isListView)
                 }
                 R.id.trash_can -> {
                     (activity as OpenFragment).openTrashCanFragment()
@@ -114,18 +114,19 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                     (activity as OpenFragment).openPasswordFragment(false)
                 }
                 R.id.chooseAll -> {
-                    isChecked = adapter.getCheckedId().size < list.size
+                    val count = adapter.getCheckedCount()
+                    isChecked = count < list.size
                     adapter.allChecked(isChecked)
-
+                    val newCount = adapter.getCheckedCount()
                     binding!!.tvTitle.text =
-                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
+                        resources.getString(R.string.selected) + " $newCount"
 
-                    val isEnabled = adapter.getCheckedId().size > 0
+                    val isEnabled = newCount > 0
                     bottomMenuEnable(isEnabled)
 
                     var isAnchor = false
-                    for (i in 0 until adapter.getCheckedId().size) {
-                        if (!list[adapter.getCheckedId()[i]].isTop) {
+                    for (i in 0 until newCount) {
+                        if (!adapter.getCheckedNotes()[i].isTop) {
                             isAnchor = true
                         }
                     }
@@ -133,7 +134,7 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                     if (isAnchor) {
                         changeIcon(true)
                     } else {
-                        if (adapter.getCheckedId().size != 0) {
+                        if (newCount != 0) {
                             changeIcon(false)
                         }
                     }
@@ -141,6 +142,17 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
             }
             true
         }
+    }
+
+    private fun saveTableVariant(isListView: Boolean) {
+        val savedVariant =
+            activity?.getSharedPreferences(
+                Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
+                Context.MODE_PRIVATE
+            )
+                ?.edit()
+        savedVariant?.putBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, isListView)
+        savedVariant?.apply()
     }
 
     private fun changeIcon(isAnchor: Boolean) {
@@ -171,22 +183,18 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
     private fun initButton() {
         binding!!.fbAdd.setOnClickListener {
             val newNote = Note(Type.IS_NORMAL.name)
-            (activity as OpenFragment).openDetailFragment(newNote, true, Constants.NOTES_FRAGMENT)
-
+            (activity as OpenFragment).openDetailFragment(newNote, true)
         }
     }
 
     private fun initBottomNavigationView() {
 
         binding!!.btMenuNotes.setOnItemSelectedListener {
+            val checkedItems = adapter.getCheckedNotes()
             when (it.itemId) {
                 R.id.hide -> {
-                    val checkedItems = adapter.getCheckedId()
-                    for (i in checkedItems.indices) {
-                        val indexForDelete = checkedItems[i]
-                        val note = list[indexForDelete]
-                        note.typeName = Type.IS_HIDDEN.name
-                        dbManager.updateItem(note)
+                    for (i in checkedItems) {
+                        moveToPersonalFolder(i)
                     }
                     val noteMoved = this.resources.getQuantityString(
                         R.plurals.plurals_note_moved,
@@ -202,18 +210,13 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                     goToNormalView()
                 }
                 R.id.pinToTopOfList -> {
-                    val checkedItems = adapter.getCheckedId()
                     if (it.title.equals(resources.getString(R.string.anchor))) {
-                        for (i in checkedItems.indices) {
-                            val indexForMoveTop = checkedItems[i]
-                            list[indexForMoveTop].isTop = true
-                            dbManager.updateItem(list[indexForMoveTop])
+                        for (i in checkedItems) {
+                            moveTop(i)
                         }
                     } else
-                        for (i in checkedItems.indices) {
-                            val indexForMoveTop = checkedItems[i]
-                            list[indexForMoveTop].isTop = false
-                            dbManager.updateItem(list[indexForMoveTop])
+                        for (i in checkedItems) {
+                            removeTop(i)
                         }
                     fillAdapter("")
                     goToNormalView()
@@ -221,7 +224,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                     it.setTitle(R.string.anchor)
                 }
                 R.id.deleteNotes -> {
-                    val checkedItems = adapter.getCheckedId()
                     alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
@@ -240,12 +242,10 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                     alertDialog.setPositiveButton(
                         R.string.ok
                     ) { dialog, _ ->
-                        for (i in checkedItems.indices) {
-                            val indexForDelete = checkedItems[i]
-                            val note = list[indexForDelete]
-                            moveToTrash(note)
-                            fillAdapter("")
+                        for (i in checkedItems) {
+                            moveToTrash(i)
                         }
+                        fillAdapter("")
                         dialog.dismiss()
                     }
                     goToNormalView()
@@ -257,6 +257,20 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
         }
     }
 
+    private fun moveToPersonalFolder(note: Note) {
+        note.typeName = Type.IS_HIDDEN.name
+        dbManager.updateItem(note)
+    }
+
+    private fun moveTop(note: Note) {
+        note.isTop = true
+        dbManager.updateItem(note)
+    }
+
+    private fun removeTop(note: Note) {
+        note.isTop = false
+        dbManager.updateItem(note)
+    }
 
     private fun moveToTrash(note: Note) {
         note.typeName = Type.IS_TRASHED.name
@@ -277,21 +291,20 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
         super.onResume()
         dbManager.openDb()
         fillAdapter("")
-
     }
 
-    override fun onClickElement(note: Note?, position: Int) {
+    override fun onClickItem(note: Note?) {
         if (binding!!.fbAdd.visibility == View.VISIBLE) {
-            (activity as OpenFragment).openDetailFragment(note!!, false, Constants.NOTES_FRAGMENT)
+            (activity as OpenFragment).openDetailFragment(note!!, false)
         } else {
-            val count = adapter.getCheckedId().size
+            val count = adapter.getCheckedCount()
             binding!!.tvTitle.text = resources.getString(R.string.selected) + " $count"
             if (count > 0) {
                 bottomMenuEnable(true)
                 var isAnchor = false
-                for (i in 0 until count) {
-                    val index = adapter.getCheckedId()[i]
-                    if (!list[index].isTop) isAnchor = true
+                val checkedItems = adapter.getCheckedNotes()
+                for (i in checkedItems) {
+                    if (!i.isTop) isAnchor = true
                 }
                 changeIcon(isAnchor)
             } else bottomMenuEnable(false)
@@ -299,14 +312,14 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
     }
 
 
-    override fun onLongClickElement() {
+    override fun onLongClickItem() {
         binding!!.btMenuNotes.visibility = View.VISIBLE
         binding!!.fbAdd.visibility = View.GONE
         binding!!.tvTitle.text = resources.getString(R.string.select_objects)
         binding!!.tbNotes.menu?.clear()
         binding!!.tbNotes.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
-        if (adapter.getCheckedId().isEmpty()) {
+        if (adapter.getCheckedNotes().isEmpty()) {
             bottomMenuEnable(false)
         }
     }
@@ -326,21 +339,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
         }
     }
 
-
-    override fun onDestroy() {
-        val savedVariant =
-            activity?.getSharedPreferences(
-                Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
-                Context.MODE_PRIVATE
-            )
-                ?.edit()
-        savedVariant?.putBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, isListView)
-        savedVariant?.apply()
-        dbManager.closeDb()
-        binding = null
-        super.onDestroy()
-    }
-
     private fun fillAdapter(text: String) {
         job?.cancel()
         job = CoroutineScope(Dispatchers.Main).launch {
@@ -352,7 +350,6 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                 binding!!.tvGreeting.visibility = View.VISIBLE
             }
         }
-
     }
 
     private fun initOnBackPressedListener() {
@@ -371,6 +368,17 @@ class NotesFragment : Fragment(), NoteAdapter.ShowDetail {
                 }
             }
         })
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        binding?.rcList?.adapter = null
+    }
+
+    override fun onDestroy() {
+        dbManager.closeDb()
+        binding = null
+        super.onDestroy()
     }
 
 }

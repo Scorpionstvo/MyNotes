@@ -1,6 +1,7 @@
 package com.example.myproject.project.hidden
 
 import android.app.AlertDialog
+import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,8 +12,10 @@ import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.GridLayoutManager
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentHiddenNotesBinding
+import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
+import com.example.myproject.project.list.NotesFragment
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.Constants
 import kotlinx.coroutines.CoroutineScope
@@ -21,9 +24,9 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
 
-class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
+class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private var binding: FragmentHiddenNotesBinding? = null
-    private val adapter = HiddenNoteAdapter(this)
+    private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
     private var isListView = false
     private var nameIconGrid: String? = null
@@ -35,7 +38,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
     private val type = Type.IS_HIDDEN.name
 
     interface OpenFragment {
-        fun openDetailFragment(note: Note, isNew: Boolean, callerFragment: String)
+        fun openDetailFragment(note: Note, isNew: Boolean)
 
         fun openPasswordFragment(isDataChange: Boolean)
     }
@@ -59,8 +62,10 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
+        initButton()
         initBottomNavigationView()
         initOnBackPressedListener()
+        dbManager.openDb()
     }
 
     private fun recyclerViewStateCreated() {
@@ -72,7 +77,6 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
             nameIconGrid = resources.getString(R.string.list)
         }
     }
-
 
     private fun changeStateRecyclerView(isListView: Boolean): String {
         return if (isListView) {
@@ -91,17 +95,33 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
                 R.id.list -> {
                     it.title = changeStateRecyclerView(isListView)
                     isListView = !isListView
+                    saveTableVariant(isListView)
                 }
                 R.id.chooseAll -> {
-                    isChecked = adapter.getCheckedId().size < hiddenList.size
+                    val count = adapter.getCheckedCount()
+                    isChecked = count < hiddenList.size
                     adapter.allChecked(isChecked)
 
+                    val newCount = adapter.getCheckedCount()
                     binding!!.tvHiddenNotesTitle.text =
-                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
+                        resources.getString(R.string.selected) + " $newCount"
 
-                    val isEnabled = adapter.getCheckedId().size > 0
+                    val isEnabled = newCount > 0
                     bottomMenuEnable(isEnabled)
+                    var isAnchor = false
+                    for (i in 0 until newCount) {
+                        if (!adapter.getCheckedNotes()[i].isTop) {
+                            isAnchor = true
+                        }
+                    }
 
+                    if (isAnchor) {
+                        changeIcon(true)
+                    } else {
+                        if (newCount != 0) {
+                            changeIcon(false)
+                        }
+                    }
                 }
                 R.id.change_password -> {
                     (activity as OpenFragment).openPasswordFragment(true)
@@ -109,6 +129,17 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
             }
             true
         }
+    }
+
+    private fun saveTableVariant(isListView: Boolean) {
+        val savedVariant =
+            activity?.getSharedPreferences(
+                Constants.SHARED_PREF_NAME_NOTES_FRAGMENT,
+                Context.MODE_PRIVATE
+            )
+                ?.edit()
+        savedVariant?.putBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, isListView)
+        savedVariant?.apply()
     }
 
 
@@ -129,20 +160,30 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
 
     private fun initBottomNavigationView() {
         binding!!.btMenuHiddenNotes.setOnItemSelectedListener {
+            val checkedItems = adapter.getCheckedNotes()
             when (it.itemId) {
                 R.id.declassify -> {
-                    val checkedItems = adapter.getCheckedId()
-                    for (i in checkedItems.indices) {
-                        val indexForDeclassify = checkedItems[i]
-                        val note = hiddenList[indexForDeclassify]
-                        note.typeName = Type.IS_NORMAL.name
-                        dbManager.updateItem(note)
+                    for (i in checkedItems) {
+                        declassify(i)
                     }
                     fillAdapter("")
                     goToNormalView()
                 }
+                R.id.pinToTopOfList -> {
+                    if (it.title.equals(resources.getString(R.string.anchor))) {
+                        for (i in checkedItems) {
+                            moveTop(i)
+                        }
+                    } else
+                        for (i in checkedItems) {
+                            removeTop(i)
+                        }
+                    fillAdapter("")
+                    goToNormalView()
+                    it.setIcon(R.drawable.ic_pin)
+                    it.setTitle(R.string.anchor)
+                }
                 R.id.delete -> {
-                    val checkedItems = adapter.getCheckedId()
                     alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
@@ -161,12 +202,11 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
                     alertDialog.setPositiveButton(
                         R.string.ok
                     ) { dialog, _ ->
-                        for (i in checkedItems.indices) {
-                            val indexForDelete = checkedItems[i]
-                            val note = hiddenList[indexForDelete]
-                            moveToTrash(note)
-                            fillAdapter("")
+                        for (i in checkedItems) {
+                            moveToTrash(i)
+
                         }
+                        fillAdapter("")
                         dialog.dismiss()
                     }
                     goToNormalView()
@@ -178,6 +218,20 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
         }
     }
 
+    private fun moveTop(note: Note) {
+        note.isTop = true
+        dbManager.updateItem(note)
+    }
+
+    private fun removeTop(note: Note) {
+        note.isTop = false
+        dbManager.updateItem(note)
+    }
+
+    private fun declassify(note: Note) {
+        note.typeName = Type.IS_NORMAL.name
+        dbManager.updateItem(note)
+    }
 
     private fun moveToTrash(note: Note) {
         note.typeName = Type.IS_TRASHED.name
@@ -187,63 +241,82 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
 
     private fun goToNormalView() {
         binding?.btMenuHiddenNotes?.visibility = View.GONE
+        binding?.fbAdd?.visibility = View.VISIBLE
         binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.title_toolbar_hidden_notes)
         binding?.tbHiddenNotes?.menu?.clear()
         binding?.tbHiddenNotes?.inflateMenu(R.menu.hidden_toolbar_menu)
         adapter.isShowCheckBox(false)
     }
 
-    override fun onResume() {
-        super.onResume()
-        dbManager.openDb()
-        fillAdapter("")
 
+    private fun initButton() {
+        binding!!.fbAdd.setOnClickListener {
+            val newNote = Note(Type.IS_HIDDEN.name)
+            (activity as NotesFragment.OpenFragment).openDetailFragment(newNote, true)
+        }
     }
 
-    override fun onClickElement(note: Note?, position: Int) {
+    override fun onResume() {
+        super.onResume()
+        fillAdapter("")
+        dbManager.openDb()
+    }
+
+    override fun onClickItem(note: Note?) {
         if (binding?.btMenuHiddenNotes?.visibility == View.GONE) {
-            (activity as OpenFragment).openDetailFragment(note!!, false, Constants.HIDDEN_FRAGMENT)
+            (activity as OpenFragment).openDetailFragment(note!!, false)
         } else {
-            val count = adapter.getCheckedId().size
+            val count = adapter.getCheckedCount()
             binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.selected) + " $count"
             if (count > 0) {
                 bottomMenuEnable(true)
-                var isAncor = false
-                for (i in 0 until count) {
-                    val index = adapter.getCheckedId()[i]
-                    if (!hiddenList[index].isTop) isAncor = true
+                var isAnchor = false
+                val checkedItems = adapter.getCheckedNotes()
+                for (i in checkedItems) {
+                    if (!i.isTop) isAnchor = true
                 }
-
+                changeIcon(isAnchor)
             } else bottomMenuEnable(false)
         }
     }
 
-    override fun onLongClickElement() {
+    override fun onLongClickItem() {
         binding?.btMenuHiddenNotes?.visibility = View.VISIBLE
+        binding!!.fbAdd.visibility = View.GONE
         binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.select_objects)
         binding?.tbHiddenNotes?.menu?.clear()
         binding?.tbHiddenNotes?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
-        if (adapter.getCheckedId().isEmpty()) {
+        if (adapter.getCheckedNotes().isEmpty()) {
             bottomMenuEnable(false)
         }
     }
 
+
     private fun bottomMenuEnable(isEnabled: Boolean) {
         if (isEnabled) {
+            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.pinToTopOfList)?.isEnabled = true
+            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.deleteNotes)?.isEnabled = true
             binding?.btMenuHiddenNotes?.menu?.findItem(R.id.declassify)?.isEnabled = true
-            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.delete)?.isEnabled = true
         } else {
+            changeIcon(true)
+            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.pinToTopOfList)?.isEnabled = false
+            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.deleteNotes)?.isEnabled = false
             binding?.btMenuHiddenNotes?.menu?.findItem(R.id.declassify)?.isEnabled = false
-            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.delete)?.isEnabled = false
+            binding!!.btMenuHiddenNotes.menu.findItem(R.id.plug).isChecked = true
+            binding!!.btMenuHiddenNotes.menu.setGroupCheckable(0, false, true)
         }
     }
 
-
-    override fun onDestroy() {
-        dbManager.closeDb()
-        binding = null
-        super.onDestroy()
+    private fun changeIcon(isAnchor: Boolean) {
+        val menuItem = binding?.btMenuHiddenNotes?.menu?.findItem(R.id.pinToTopOfList)
+        if (isAnchor) {
+            menuItem?.setIcon(R.drawable.ic_pin)
+            menuItem?.setTitle(R.string.anchor)
+        } else {
+            menuItem?.setIcon(R.drawable.ic_unfasten)
+            menuItem?.setTitle(R.string.unfasten)
+        }
     }
 
     private fun fillAdapter(text: String) {
@@ -264,6 +337,7 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
         activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding?.btMenuHiddenNotes?.visibility == View.VISIBLE) {
+                    binding!!.fbAdd.visibility = View.VISIBLE
                     binding?.btMenuHiddenNotes?.visibility = View.GONE
                     binding?.tvHiddenNotesTitle?.text =
                         resources.getString(R.string.title_toolbar_hidden_notes)
@@ -278,4 +352,9 @@ class HiddenNotesFragment : Fragment(), HiddenNoteAdapter.ShowDetailListener {
         })
     }
 
+    override fun onDestroy() {
+        dbManager.closeDb()
+        binding = null
+        super.onDestroy()
+    }
 }

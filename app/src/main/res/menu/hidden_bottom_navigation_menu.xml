@@ -7,8 +7,19 @@
         android:title="@string/declassify" />
 
     <item
+        android:id="@+id/pinToTopOfList"
+        android:icon="@drawable/ic_pin"
+        android:orderInCategory="2"
+        android:title="@string/anchor" />
+
+    <item
         android:id="@+id/delete"
         android:icon="@drawable/ic_delete"
         android:orderInCategory="2"
         android:title="@string/delete" />
+
+    <item
+        android:id="@+id/plug"
+        android:title=""
+        android:visible="false" />
 </menu>

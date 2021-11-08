@@ -7,11 +7,13 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
+import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentTrashBinding
+import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.note.Note
@@ -22,16 +24,17 @@ import kotlinx.coroutines.launch
 import java.util.*
 import kotlin.collections.ArrayList
 
-class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
+class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
     private var binding: FragmentTrashBinding? = null
     private var trashList = ArrayList<Note>()
-    private var adapter = TrashAdapter(this)
+    private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
     private var isListView = false
     private var nameIconGrid: String? = null
     private var isChecked = true
     lateinit var alertDialog: AlertDialog.Builder
     private var job: Job? = null
+
     private val type = Type.IS_TRASHED.name
 
     companion object {
@@ -49,14 +52,14 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding!!.rcDeletedList.adapter = adapter
+        binding?.rcDeletedList?.adapter = adapter
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
         initBottomNavigationView()
         initOnBackPressedListener()
+        dbManager.openDb()
     }
-
 
     private fun recyclerViewStateCreated() {
         if (isListView) {
@@ -98,12 +101,13 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
                     fillAdapter("")
                 }
                 R.id.chooseAll -> {
-
-                    isChecked = adapter.getCheckedId().size < trashList.size
+                    val count = adapter.getCheckedCount()
+                    isChecked = count < trashList.size
                     adapter.allChecked(isChecked)
+                    val newCount = adapter.getCheckedCount()
                     binding?.tvTrashTitle?.text =
-                        resources.getString(R.string.selected) + " ${adapter.getCheckedId().size}"
-                    val isEnabled = adapter.getCheckedId().size > 0
+                        resources.getString(R.string.selected) + " $newCount"
+                    val isEnabled = newCount > 0
                     bottomMenuEnable(isEnabled)
                 }
             }
@@ -128,21 +132,16 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
 
     private fun initBottomNavigationView() {
         binding!!.btMenuTrash.setOnItemSelectedListener {
+            val checkedItems = adapter.getCheckedNotes()
             when (it.itemId) {
                 R.id.restore -> {
-                    val checkedItems = adapter.getCheckedId()
-                    for (i in checkedItems.indices) {
-                        val indexForDeclassify = checkedItems[i]
-                        val note = trashList[indexForDeclassify]
-                        note.typeName = Type.IS_NORMAL.name
-                        note.removalTime = 0
-                        dbManager.updateItem(note)
+                    for (i in checkedItems) {
+                        restore(i)
                     }
                     fillAdapter("")
                     goToNormalView()
                 }
                 R.id.delete_permanently -> {
-                    val checkedItems = adapter.getCheckedId()
                     alertDialog = AlertDialog.Builder(activity)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
@@ -162,15 +161,10 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
                         R.string.ok
                     )
                     { dialog, _ ->
-                        for (i in checkedItems.indices) {
-                            val indexForDelete = checkedItems[i]
-                            val note = trashList[indexForDelete]
-                            dbManager.removeItem(
-                                note
-                            )
-                            fillAdapter("")
+                        for (i in checkedItems) {
+                            deletePermanently(i)
                         }
-
+                        fillAdapter("")
                         dialog.dismiss()
                     }
                     goToNormalView()
@@ -182,6 +176,15 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
         }
     }
 
+    private fun restore(note: Note) {
+        note.typeName = Type.IS_NORMAL.name
+        note.removalTime = 0
+        dbManager.updateItem(note)
+    }
+
+    private fun deletePermanently(note: Note) {
+        dbManager.removeItem(note)
+    }
 
     private fun goToNormalView() {
         binding?.btMenuTrash?.visibility = View.GONE
@@ -190,13 +193,6 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
         binding?.tbTrashCan?.inflateMenu(R.menu.trash_toolbar_menu)
         adapter.isShowCheckBox(false)
     }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        dbManager.closeDb()
-        binding = null
-    }
-
 
     private fun deleteTimer(note: Note): Boolean {
         val calendar = Calendar.getInstance()
@@ -225,20 +221,23 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
         }
     }
 
-    override fun clickCheck() {
-        val count = adapter.getCheckedId().size
-        binding?.tvTrashTitle?.text = resources.getString(R.string.selected) + " $count"
-        if (count > 0) bottomMenuEnable(true) else bottomMenuEnable(false)
+    override fun onClickItem(note: Note?) {
+        if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
+            val count = adapter.getCheckedCount()
+            binding?.tvTrashTitle?.text = resources.getString(R.string.selected) + " $count"
+            if (count > 0) bottomMenuEnable(true) else bottomMenuEnable(false)
+        } else {
+            Toast.makeText(context, "Невозможно открыть заметку", Toast.LENGTH_LONG).show()
+        }
     }
 
-    override fun onLongClickElement() {
+    override fun onLongClickItem() {
         binding?.btMenuTrash?.visibility = View.VISIBLE
         binding?.tvTrashTitle?.text = resources.getString(R.string.select_objects)
         binding?.tbTrashCan?.menu?.clear()
         binding?.tbTrashCan?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
-        if (adapter.getCheckedId().isEmpty()) bottomMenuEnable(false)
-
+        if (adapter.getCheckedNotes().isEmpty()) bottomMenuEnable(false)
     }
 
     private fun bottomMenuEnable(isEnabled: Boolean) {
@@ -255,7 +254,6 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
 
     override fun onResume() {
         super.onResume()
-        dbManager.openDb()
         fillAdapter("")
     }
 
@@ -275,6 +273,16 @@ class TrashFragment : Fragment(), TrashAdapter.TransferChoice {
                 }
             }
         })
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        dbManager.closeDb()
+        binding = null
     }
 
 
