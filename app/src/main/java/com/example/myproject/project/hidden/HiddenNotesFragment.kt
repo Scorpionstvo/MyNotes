@@ -64,8 +64,7 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         initSearchView()
         initButton()
         initBottomNavigationView()
-        initOnBackPressedListener()
-        dbManager.openDb()
+        requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
     private fun recyclerViewStateCreated() {
@@ -333,8 +332,7 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     }
 
-    private fun initOnBackPressedListener() {
-        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+    private val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding?.btMenuHiddenNotes?.visibility == View.VISIBLE) {
                     binding!!.fbAdd.visibility = View.VISIBLE
@@ -349,7 +347,11 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     activity?.onBackPressed()
                 }
             }
-        })
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        callback.remove()
     }
 
     override fun onDestroy() {

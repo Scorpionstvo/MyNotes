@@ -56,4 +56,9 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
         dialog.show(supportFragmentManager, PasswordFragment::class.simpleName)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+
+    }
+
 }

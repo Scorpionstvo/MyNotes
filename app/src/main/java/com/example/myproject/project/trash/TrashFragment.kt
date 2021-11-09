@@ -47,6 +47,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentTrashBinding.inflate(layoutInflater)
+        retainInstance = true
         return binding?.root
     }
 
@@ -57,8 +58,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         initToolbar()
         initSearchView()
         initBottomNavigationView()
-        initOnBackPressedListener()
-        dbManager.openDb()
+        requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
     private fun recyclerViewStateCreated() {
@@ -188,7 +188,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     private fun goToNormalView() {
         binding?.btMenuTrash?.visibility = View.GONE
-        binding?.tvTrashTitle?.text = ""
+        binding?.tvTrashTitle?.text = resources.getString(R.string.title_toolbar_trash_fragment)
         binding?.tbTrashCan?.menu?.clear()
         binding?.tbTrashCan?.inflateMenu(R.menu.trash_toolbar_menu)
         adapter.isShowCheckBox(false)
@@ -254,11 +254,11 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     override fun onResume() {
         super.onResume()
+        dbManager.openDb()
         fillAdapter("")
     }
 
-    private fun initOnBackPressedListener() {
-        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+    private val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
                     binding?.btMenuTrash?.visibility = View.GONE
@@ -272,11 +272,11 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
                     activity?.onBackPressed()
                 }
             }
-        })
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        callback.remove()
     }
 
     override fun onDestroy() {
