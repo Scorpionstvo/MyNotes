@@ -30,7 +30,6 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
     private val adapter = NoteAdapter(this)
     private val dbManager = MyApplication.dbManager
     private var isListView = false
-    private var nameIconGrid: String? = null
     private var isChecked = true
     lateinit var alertDialog: AlertDialog.Builder
     private var job: Job? = null
@@ -52,7 +51,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding?.rcDeletedList?.adapter = adapter
+        binding?.rcTrashList?.adapter = adapter
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
@@ -63,29 +62,29 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     private fun recyclerViewStateCreated() {
         if (isListView) {
-            binding?.rcDeletedList?.layoutManager = GridLayoutManager(context, 1)
-            nameIconGrid = resources.getString(R.string.grid)
+            binding?.rcTrashList?.layoutManager = GridLayoutManager(context, 1)
+            binding?.tbTrashCan?.menu?.findItem(R.id.list)?.icon =
+                resources.getDrawable(R.drawable.ic_grid)
         } else {
-            binding!!.rcDeletedList.layoutManager =
+            binding?.rcTrashList?.layoutManager =
                 StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-            nameIconGrid = resources.getString(R.string.list)
+            binding?.tbTrashCan?.menu?.findItem(R.id.list)?.icon =
+                resources.getDrawable(R.drawable.ic_list)
         }
     }
 
-
-    private fun changeStateRecyclerView(isListView: Boolean): String {
-        return if (isListView) {
-            binding!!.rcDeletedList.layoutManager =
-                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-            resources.getString(R.string.list)
+    private fun choiceStateRecyclerView(isListView: Boolean) {
+        if (isListView) {
+            binding!!.rcTrashList.layoutManager = GridLayoutManager(context, 1)
+            binding!!.tbTrashCan.menu.findItem(R.id.list).icon = resources.getDrawable(R.drawable.ic_grid)
         } else {
-            binding!!.rcDeletedList.layoutManager = GridLayoutManager(context, 1)
-            resources.getString(R.string.grid)
+            binding!!.tbTrashCan.menu.findItem(R.id.list).icon = resources.getDrawable(R.drawable.ic_list)
+            binding!!.rcTrashList.layoutManager =
+                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
         }
     }
 
     private fun initToolbar() {
-        binding!!.tbTrashCan.menu.findItem(R.id.list).title = nameIconGrid
         binding!!.tbTrashCan.setNavigationIcon(R.drawable.ic_back)
         binding!!.tbTrashCan.setNavigationOnClickListener {
             activity?.onBackPressed()
@@ -93,12 +92,8 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding!!.tbTrashCan.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.list -> {
-                    it.title = changeStateRecyclerView(isListView)
-                    isListView = !isListView
-                }
-                R.id.empty_trash -> {
-                    dbManager.emptyList(type)
-                    fillAdapter("")
+                  isListView = !isListView
+                    choiceStateRecyclerView(isListView)
                 }
                 R.id.chooseAll -> {
                     val count = adapter.getCheckedCount()
@@ -190,7 +185,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.btMenuTrash?.visibility = View.GONE
         binding?.tvTrashTitle?.text = ""
         binding?.tbTrashCan?.menu?.clear()
-        binding?.tbTrashCan?.inflateMenu(R.menu.trash_toolbar_menu)
+        binding?.tbTrashCan?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
         adapter.isShowCheckBox(false)
     }
 
@@ -266,7 +261,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
                         resources.getString(R.string.title_toolbar_trash_fragment)
                     adapter.isShowCheckBox(false)
                     binding?.tbTrashCan?.menu?.clear()
-                    binding?.tbTrashCan?.inflateMenu(R.menu.trash_toolbar_menu)
+                    binding?.tbTrashCan?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
                 } else {
                     isEnabled = false
                     activity?.onBackPressed()
