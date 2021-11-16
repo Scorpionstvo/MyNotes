@@ -40,6 +40,7 @@
     <string name="send_to_desktop">send to desktop</string>
     <string name="title">Title</string>
     <string name="toSend">Send</string>
+    <string name="noteDeleting">Delete this note?</string>
 
     <!-- Trash Fragment -->
     <string name="delete_permanently">delete permanently</string>

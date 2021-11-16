@@ -45,7 +45,6 @@
         android:layout_marginEnd="@dimen/padding_large"
         android:layout_marginRight="@dimen/padding_large"
         android:layout_marginBottom="@dimen/padding_large"
-        android:background="@color/teal_200"
         android:clickable="true"
         android:contentDescription="@string/add_note"
         android:focusable="true"

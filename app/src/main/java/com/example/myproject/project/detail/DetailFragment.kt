@@ -1,6 +1,7 @@
 package com.example.myproject.project.detail
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -99,15 +100,32 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                     send(message)
                 }
                 R.id.delete -> {
-                    if (binding?.rcWallpapers?.visibility == View.VISIBLE) binding?.rcWallpapers?.visibility =
-                        View.GONE
-                    saveNote(Type.IS_TRASHED.name)
-                    activity?.onBackPressed()
+                    val alertDialog = AlertDialog.Builder(context)
+                    alertDialog.setTitle(R.string.deleting_notes)
+                    val message = "${resources.getString(R.string.delete)} заметку?"
+                    alertDialog.setMessage(message)
+                    alertDialog.setNegativeButton(
+                        R.string.undo
+                    ) { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    alertDialog.setPositiveButton(
+                        R.string.ok
+                    ) { dialog, _ ->
+                        if (binding?.rcWallpapers?.visibility == View.VISIBLE) binding?.rcWallpapers?.visibility =
+                            View.GONE
+                        saveNote(Type.IS_TRASHED.name)
+                        activity?.onBackPressed()
+                    }
+                    val alert = alertDialog.create()
+                    alert.show()
                 }
             }
             true
         }
+
     }
+
 
     private fun saveNote(typeName: String) {
         val savedTitle = binding!!.etTitle.text.toString()
@@ -163,6 +181,10 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                     putPictureFromGallery()
                 }
                 R.id.check -> {
+                    if (binding?.rcWallpapers?.visibility == View.VISIBLE) binding?.rcWallpapers?.visibility =
+                        View.GONE
+                    saveNote(Type.IS_TRASHED.name)
+                    activity?.onBackPressed()
                 }
                 R.id.changeBackground -> {
                     binding?.rcWallpapers?.visibility = View.VISIBLE
@@ -258,6 +280,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         super.onDestroyView()
         callback.remove()
         binding?.rcWallpapers?.adapter = null
+
     }
 
     override fun onDestroy() {

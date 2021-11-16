@@ -7,9 +7,6 @@ import com.example.myproject.project.detail.DetailFragmentParams
 class PasswordFragmentParams(
     val isDataChange: Boolean
 ) : Parcelable {
-    constructor(parcel: Parcel) : this(
-        parcel.readByte() != 0.toByte()
-    )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
         parcel.writeByte(if (isDataChange) 1 else 0)
