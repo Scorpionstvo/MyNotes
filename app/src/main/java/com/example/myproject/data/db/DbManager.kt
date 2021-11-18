@@ -97,14 +97,6 @@ class DbManager(private val dbHelper: DbHelper) {
         db?.delete(DbConstants.NOTES_TABLE, selection, null)
     }
 
-    fun emptyList(typeName: String) {
-        db?.delete(
-            DbConstants.NOTES_TABLE,
-            "${DbConstants.TYPE} = ?",
-            arrayOf(typeName)
-        )
-    }
-
     fun closeDb() {
         dbHelper.close()
     }
