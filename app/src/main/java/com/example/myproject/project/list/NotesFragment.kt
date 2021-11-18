@@ -200,6 +200,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                 R.id.hide -> {
                     for (i in checkedItems) {
                         moveToPersonalFolder(i)
+                        adapter.notifyItemRemoved(i.id)
                     }
                     val noteMoved = this.resources.getQuantityString(
                         R.plurals.plurals_note_moved,
@@ -211,6 +212,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                         Toast.LENGTH_LONG
                     )
                         .show()
+
                     fillAdapter("")
                     goToNormalView()
                 }
@@ -377,10 +379,14 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.rcList?.adapter = null
     }
 
+
     override fun onDestroy() {
-        dbManager.closeDb()
         binding = null
         super.onDestroy()
     }
 
+    override fun onStop() {
+        super.onStop()
+        dbManager.closeDb()
+    }
 }

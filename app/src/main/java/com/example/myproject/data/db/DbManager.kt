@@ -3,6 +3,7 @@ package com.example.myproject.data.db
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.provider.BaseColumns
+import android.util.Log
 import com.example.myproject.project.note.Note
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -15,7 +16,10 @@ class DbManager(private val dbHelper: DbHelper) {
     }
 
     fun openDb() {
+
         db = dbHelper.writableDatabase
+        Log.d("DDDDDD", "OPEN : $db, ${db?.isDbLockedByCurrentThread}")
+
     }
 
     fun insertToTable(note: Note) {
@@ -98,6 +102,8 @@ class DbManager(private val dbHelper: DbHelper) {
     }
 
     fun closeDb() {
+        Log.d("DDDDDD", "CLOSE : $db, ${db?.isDbLockedByCurrentThread}")
+
         dbHelper.close()
     }
 }

@@ -342,8 +342,12 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         })
     }
 
-    override fun onDestroy() {
+    override fun onStop() {
+        super.onStop()
         dbManager.closeDb()
+    }
+
+    override fun onDestroy() {
         binding = null
         super.onDestroy()
     }
