@@ -65,7 +65,6 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         initButton()
         initBottomNavigationView()
         initOnBackPressedListener()
-        dbManager.openDb()
     }
 
     private fun recyclerViewStateCreated() {
@@ -352,8 +351,12 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         })
     }
 
-    override fun onDestroy() {
+    override fun onStop() {
+        super.onStop()
         dbManager.closeDb()
+    }
+
+    override fun onDestroy() {
         binding = null
         super.onDestroy()
     }

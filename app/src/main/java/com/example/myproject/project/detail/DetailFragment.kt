@@ -239,6 +239,11 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         }
     }
 
+    override fun onStop() {
+        super.onStop()
+        dbManager.closeDb()
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
         callback.remove()
@@ -246,9 +251,10 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
 
     override fun onDestroy() {
         super.onDestroy()
-        dbManager.closeDb()
         binding = null
     }
+
+
 }
 
 

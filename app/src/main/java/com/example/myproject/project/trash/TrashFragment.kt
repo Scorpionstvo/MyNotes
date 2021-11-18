@@ -58,7 +58,6 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         initSearchView()
         initBottomNavigationView()
         initOnBackPressedListener()
-        dbManager.openDb()
     }
 
     private fun recyclerViewStateCreated() {
@@ -254,6 +253,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     override fun onResume() {
         super.onResume()
+        dbManager.openDb()
         fillAdapter("")
     }
 
@@ -275,13 +275,13 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         })
     }
 
-    override fun onDestroyView() {
-        super.onDestroyView()
+    override fun onStop() {
+        super.onStop()
+        dbManager.closeDb()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        dbManager.closeDb()
         binding = null
     }
 

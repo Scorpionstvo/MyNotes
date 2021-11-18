@@ -1,5 +1,6 @@
 package com.example.myproject.project.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,8 +8,11 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.recyclerview.widget.AsyncListDiffer
+import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.currentnote.R
+import com.example.myproject.project.NotesDiffCallback
 import com.example.myproject.project.note.Note
 import com.example.myproject.project.util.DateFormatter
 import com.example.myproject.project.wallpaper.Wallpaper
@@ -150,9 +154,11 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
     }
 
     fun updateAdapter(listItems: List<Note>) {
+        val diffCallback = NotesDiffCallback(noteList, listItems)
+        val diffResult = DiffUtil.calculateDiff(diffCallback)
         noteList.clear()
         noteList.addAll(listItems)
-        notifyDataSetChanged()
+        diffResult.dispatchUpdatesTo(this)
     }
 
 }
