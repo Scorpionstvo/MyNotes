@@ -44,6 +44,7 @@
     <string name="send_to_desktop">отправить на рабочий стол</string>
     <string name="shift">переместить</string>
     <string name="title">Title</string>
+    <string name="noteDeleting">Удалить заметку?</string>
 
     <!-- Trash Fragment -->
     <string name="delete_permanently">удалить навсегда</string>

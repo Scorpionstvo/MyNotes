@@ -1,6 +1,7 @@
 package com.example.myproject.project.detail
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
@@ -33,6 +34,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
     private var isNew = false
     private val uriList = ArrayList<Uri>()
     private var wallpaperName: String? = null
+    private var isWasSave = false
 
     companion object {
         fun newInstance(params: DetailFragmentParams) = DetailFragment().apply {
@@ -44,11 +46,18 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         }
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putParcelable(Note::class.simpleName, note)
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
+        if (savedInstanceState != null) note =
+            savedInstanceState.getParcelable(Note::class.simpleName)!!
         binding = FragmentDetailBinding.inflate(layoutInflater)
         return binding?.root
     }
@@ -81,6 +90,8 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         binding!!.tbDetail.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.save -> {
+                    if (binding?.rcWallpapers?.visibility == View.VISIBLE) binding?.rcWallpapers?.visibility =
+                        View.GONE
                     saveNote(note.typeName)
                     activity?.onBackPressed()
                 }
@@ -89,16 +100,34 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                     send(message)
                 }
                 R.id.delete -> {
-                    saveNote(Type.IS_TRASHED.name)
-                    activity?.onBackPressed()
+                    val alertDialog = AlertDialog.Builder(context)
+                    alertDialog.setTitle(R.string.deleting_notes)
+                    val message = "${resources.getString(R.string.delete)} заметку?"
+                    alertDialog.setMessage(message)
+                    alertDialog.setNegativeButton(
+                        R.string.undo
+                    ) { dialog, _ ->
+                        dialog.dismiss()
+                    }
+                    alertDialog.setPositiveButton(
+                        R.string.ok
+                    ) { dialog, _ ->
+                        if (binding?.rcWallpapers?.visibility == View.VISIBLE) binding?.rcWallpapers?.visibility =
+                            View.GONE
+                        saveNote(Type.IS_TRASHED.name)
+                        activity?.onBackPressed()
+                    }
+                    val alert = alertDialog.create()
+                    alert.show()
                 }
             }
             true
         }
+
     }
 
+
     private fun saveNote(typeName: String) {
-        if (note.typeName == Type.IS_TRASHED.name) return
         val savedTitle = binding!!.etTitle.text.toString()
         val savedContent = binding!!.etContent.text.toString()
         val now = getCurrentTime()
@@ -109,7 +138,10 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
             note.content = savedContent
             note.editTime = now
             note.wallpaperName = wallpaperName
-            if (typeName == Type.IS_TRASHED.name) note.removalTime = System.currentTimeMillis()
+            if (typeName == Type.IS_TRASHED.name) {
+                note.removalTime = System.currentTimeMillis()
+                note.typeName = typeName
+            }
             dbManager.insertToTable(note)
             isNew = false
         } else {
@@ -123,6 +155,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
             if (typeName == Type.IS_TRASHED.name) note.removalTime = System.currentTimeMillis()
             dbManager.updateItem(note)
         }
+        isWasSave = true
     }
 
 
@@ -148,6 +181,10 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                     putPictureFromGallery()
                 }
                 R.id.check -> {
+                    if (binding?.rcWallpapers?.visibility == View.VISIBLE) binding?.rcWallpapers?.visibility =
+                        View.GONE
+                    saveNote(Type.IS_TRASHED.name)
+                    activity?.onBackPressed()
                 }
                 R.id.changeBackground -> {
                     binding?.rcWallpapers?.visibility = View.VISIBLE
@@ -233,7 +270,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                 binding?.rcWallpapers?.visibility = View.GONE
             } else {
                 isEnabled = false
-                saveNote(note.typeName)
+                if (!isWasSave) saveNote(note.typeName)
                 activity?.onBackPressed()
             }
         }
@@ -247,6 +284,8 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
     override fun onDestroyView() {
         super.onDestroyView()
         callback.remove()
+        binding?.rcWallpapers?.adapter = null
+
     }
 
     override fun onDestroy() {

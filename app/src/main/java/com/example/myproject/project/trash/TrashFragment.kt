@@ -46,6 +46,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentTrashBinding.inflate(layoutInflater)
+        retainInstance = true
         return binding?.root
     }
 
@@ -56,7 +57,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         initToolbar()
         initSearchView()
         initBottomNavigationView()
-        initOnBackPressedListener()
+        requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
     private fun recyclerViewStateCreated() {
@@ -182,7 +183,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     private fun goToNormalView() {
         binding?.btMenuTrash?.visibility = View.GONE
-        binding?.tvTrashTitle?.text = ""
+        binding?.tvTrashTitle?.text = resources.getString(R.string.title_toolbar_trash_fragment)
         binding?.tbTrashCan?.menu?.clear()
         binding?.tbTrashCan?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
         adapter.isShowCheckBox(false)
@@ -252,8 +253,7 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         fillAdapter("")
     }
 
-    private fun initOnBackPressedListener() {
-        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+    private val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
                     binding?.btMenuTrash?.visibility = View.GONE
@@ -267,18 +267,22 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
                     activity?.onBackPressed()
                 }
             }
-        })
     }
 
-    override fun onStop() {
+
+     override fun onStop() {
         super.onStop()
         dbManager.closeDb()
     }
+  
+  override fun onDestroyView() {
+        super.onDestroyView()
+        callback.remove()
 
+  
     override fun onDestroy() {
         super.onDestroy()
         binding = null
     }
-
 
 }

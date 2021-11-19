@@ -56,7 +56,9 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentNotesBinding.inflate(inflater)
+        retainInstance = true
         return binding?.root!!
+
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
@@ -67,7 +69,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         initSearchView()
         initButton()
         initBottomNavigationView()
-        initOnBackPressedListener()
+        requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
     private fun recyclerViewStateCreated() {
@@ -361,8 +363,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         }
     }
 
-    private fun initOnBackPressedListener() {
-        activity?.onBackPressedDispatcher?.addCallback(object : OnBackPressedCallback(true) {
+    private val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
                 if (binding?.fbAdd?.visibility == View.GONE) {
                     goToNormalView()
@@ -371,11 +372,11 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     activity?.onBackPressed()
                 }
             }
-        })
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
+        callback.remove()
         binding?.rcList?.adapter = null
     }
 
