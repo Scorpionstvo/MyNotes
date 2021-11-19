@@ -4,8 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.example.myproject.project.list.NotesFragment"
-    tools:menu="@menu/notes_toolbar_menu">
+    tools:context="com.example.myproject.project.list.NotesFragment">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -43,7 +42,6 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/padding_large"
-        android:layout_marginRight="@dimen/padding_large"
         android:layout_marginBottom="@dimen/padding_large"
         android:clickable="true"
         android:contentDescription="@string/add_note"
@@ -71,7 +69,20 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:menu="@menu/notes_toolbar_menu" />
+        app:menu="@menu/list_or_grid_toolbar_menu" />
+
+    <ImageView
+        android:id="@+id/imFolders"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_margin="-36dp"
+        android:padding="36dp"
+        app:layout_constraintBottom_toBottomOf="@id/tbNotes"
+        app:layout_constraintEnd_toEndOf="@id/tbNotes"
+        app:layout_constraintStart_toStartOf="@id/tbNotes"
+        app:layout_constraintTop_toTopOf="@id/tbNotes"
+        app:srcCompat="@drawable/ic_folders" />
+
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/btMenuNotes"

@@ -68,7 +68,7 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:menu="@menu/hidden_toolbar_menu">
+        app:menu="@menu/list_or_grid_toolbar_menu">
 
         <ImageView
             android:id="@+id/imSecret"

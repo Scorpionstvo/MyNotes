@@ -4,6 +4,7 @@ import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
 import android.view.*
+import android.widget.PopupMenu
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
@@ -29,7 +30,6 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private val dbManager = MyApplication.dbManager
     private var list = ArrayList<Note>()
     private var isListView = false
-    lateinit var nameIconGrid: String
     private var isChecked = false
     lateinit var alertDialog: AlertDialog.Builder
     private var job: Job? = null
@@ -63,7 +63,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        binding!!.rcList.adapter = adapter
+        binding?.rcList?.adapter = adapter
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
@@ -79,48 +79,39 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                 Context.MODE_PRIVATE
             )
         isListView = share!!.getBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, false)
-        if (isListView) {
-            binding!!.rcList.layoutManager = GridLayoutManager(context, 1)
-            nameIconGrid = resources.getString(R.string.grid)
-        } else {
-            binding!!.rcList.layoutManager =
-                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-            nameIconGrid = resources.getString(R.string.list)
-        }
+        choiceStateRecyclerView(isListView)
     }
 
-    private fun changeStateRecyclerView(isListView: Boolean): String {
-        return if (isListView) {
-            binding!!.rcList.layoutManager =
-                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
-            resources.getString(R.string.list)
+    private fun choiceStateRecyclerView(isListView: Boolean) {
+        if (isListView) {
+            binding?.rcList?.layoutManager = GridLayoutManager(context, 1)
+            binding?.tbNotes?.menu?.findItem(R.id.list)?.icon =
+                resources.getDrawable(R.drawable.ic_grid)
         } else {
-            binding!!.rcList.layoutManager = GridLayoutManager(context, 1)
-            resources.getString(R.string.grid)
+            binding?.rcList?.layoutManager =
+                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+            binding?.tbNotes?.menu?.findItem(R.id.list)?.icon =
+                resources.getDrawable(R.drawable.ic_list)
         }
     }
 
     private fun initToolbar() {
-        binding!!.tbNotes.menu.findItem(R.id.list).title = nameIconGrid
-        binding!!.tbNotes.setOnMenuItemClickListener {
+        binding?.imFolders?.setOnClickListener {
+            showPopupMenu(binding?.imFolders!!)
+        }
+        binding?.tbNotes?.setOnMenuItemClickListener {
             when (it.itemId) {
                 R.id.list -> {
-                    it.title = changeStateRecyclerView(isListView)
                     isListView = !isListView
+                    choiceStateRecyclerView(isListView)
                     saveTableVariant(isListView)
-                }
-                R.id.trash_can -> {
-                    (activity as OpenFragment).openTrashCanFragment()
-                }
-                R.id.personal_folder -> {
-                    (activity as OpenFragment).openPasswordFragment(false)
                 }
                 R.id.chooseAll -> {
                     val count = adapter.getCheckedCount()
                     isChecked = count < list.size
                     adapter.allChecked(isChecked)
                     val newCount = adapter.getCheckedCount()
-                    binding!!.tvTitle.text =
+                    binding?.tvTitle?.text =
                         resources.getString(R.string.selected) + " $newCount"
 
                     val isEnabled = newCount > 0
@@ -144,6 +135,20 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             }
             true
         }
+    }
+
+    private fun showPopupMenu(v: View) {
+        val popupMenu = PopupMenu(context, v)
+        popupMenu.inflate(R.menu.folders_popup_menu)
+        popupMenu.setOnMenuItemClickListener {
+            when (it.itemId) {
+                R.id.trash_can -> (activity as OpenFragment).openTrashCanFragment()
+                R.id.personal_folder -> (activity as OpenFragment).openPasswordFragment(false)
+            }
+            true
+        }
+        popupMenu.show()
+
     }
 
     private fun saveTableVariant(isListView: Boolean) {
@@ -191,12 +196,13 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     private fun initBottomNavigationView() {
 
-        binding!!.btMenuNotes.setOnItemSelectedListener {
+        binding?.btMenuNotes?.setOnItemSelectedListener {
             val checkedItems = adapter.getCheckedNotes()
             when (it.itemId) {
                 R.id.hide -> {
                     for (i in checkedItems) {
                         moveToPersonalFolder(i)
+                        adapter.notifyItemRemoved(i.id)
                     }
                     val noteMoved = this.resources.getQuantityString(
                         R.plurals.plurals_note_moved,
@@ -208,6 +214,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                         Toast.LENGTH_LONG
                     )
                         .show()
+
                     fillAdapter("")
                     goToNormalView()
                 }
@@ -283,9 +290,10 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private fun goToNormalView() {
         binding?.btMenuNotes?.visibility = View.GONE
         binding?.fbAdd?.visibility = View.VISIBLE
+        binding?.imFolders?.visibility = View.VISIBLE
         binding?.tvTitle?.text = ""
         binding?.tbNotes?.menu?.clear()
-        binding?.tbNotes?.inflateMenu(R.menu.notes_toolbar_menu)
+        binding?.tbNotes?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
         adapter.isShowCheckBox(false)
     }
 
@@ -300,7 +308,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             (activity as OpenFragment).openDetailFragment(note!!, false)
         } else {
             val count = adapter.getCheckedCount()
-            binding!!.tvTitle.text = resources.getString(R.string.selected) + " $count"
+            binding?.tvTitle?.text = resources.getString(R.string.selected) + " $count"
             if (count > 0) {
                 bottomMenuEnable(true)
                 var isAnchor = false
@@ -315,11 +323,12 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
 
     override fun onLongClickItem() {
-        binding!!.btMenuNotes.visibility = View.VISIBLE
-        binding!!.fbAdd.visibility = View.GONE
-        binding!!.tvTitle.text = resources.getString(R.string.select_objects)
-        binding!!.tbNotes.menu?.clear()
-        binding!!.tbNotes.inflateMenu(R.menu.choose_all_toolbar_menu)
+        binding?.btMenuNotes?.visibility = View.VISIBLE
+        binding?.fbAdd?.visibility = View.GONE
+        binding?.imFolders?.visibility = View.GONE
+        binding?.tvTitle?.text = resources.getString(R.string.select_objects)
+        binding?.tbNotes?.menu?.clear()
+        binding?.tbNotes?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
         if (adapter.getCheckedNotes().isEmpty()) {
             bottomMenuEnable(false)
@@ -356,13 +365,8 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     private val callback = object : OnBackPressedCallback(true) {
             override fun handleOnBackPressed() {
-                if (binding!!.fbAdd.visibility == View.GONE) {
-                    binding!!.fbAdd.visibility = View.VISIBLE
-                    binding!!.btMenuNotes.visibility = View.GONE
-                    binding!!.tvTitle.text = ""
-                    adapter.isShowCheckBox(false)
-                    binding!!.tbNotes.menu?.clear()
-                    binding!!.tbNotes.inflateMenu(R.menu.notes_toolbar_menu)
+                if (binding?.fbAdd?.visibility == View.GONE) {
+                    goToNormalView()
                 } else {
                     isEnabled = false
                     activity?.onBackPressed()
@@ -374,12 +378,16 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         super.onDestroyView()
         callback.remove()
         binding?.rcList?.adapter = null
-        binding = null
     }
 
+
     override fun onDestroy() {
-        dbManager.closeDb()
+        binding = null
         super.onDestroy()
     }
 
+    override fun onStop() {
+        super.onStop()
+        dbManager.closeDb()
+    }
 }

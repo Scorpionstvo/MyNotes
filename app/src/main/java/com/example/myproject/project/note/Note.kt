@@ -3,7 +3,7 @@ package com.example.myproject.project.note
 import android.os.Parcel
 import android.os.Parcelable
 
-class Note(
+data class Note(
     var typeName: String,
     var title: String = "",
     var content: String = "",
@@ -54,4 +54,6 @@ class Note(
         if (!this.isTop && !other.isTop) result = other.editTime.compareTo(this.editTime)
         return result
     }
+
+
 }
