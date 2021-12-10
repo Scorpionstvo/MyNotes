@@ -1,9 +1,9 @@
-package com.example.myproject.project
+package com.example.myproject.project.adapter
 
 import androidx.recyclerview.widget.DiffUtil
-import com.example.myproject.project.note.Note
+import com.example.myproject.project.data.AdapterItemModel
 
-class NotesDiffCallback(private  val oldList : List <Note>, private val newList: List<Note>) : DiffUtil.Callback() {
+class NotesDiffCallback(private  val oldList : List <AdapterItemModel>, private val newList: List<AdapterItemModel>) : DiffUtil.Callback() {
 
     override fun getOldListSize(): Int = oldList.size
 
@@ -12,7 +12,7 @@ class NotesDiffCallback(private  val oldList : List <Note>, private val newList:
     override fun areItemsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
         val oldNote = oldList[oldItemPosition]
         val newNote = newList[newItemPosition]
-        return oldNote.id == newNote.id
+        return oldNote.note.id == newNote.note.id
     }
 
     override fun areContentsTheSame(oldItemPosition: Int, newItemPosition: Int): Boolean {
@@ -20,5 +20,6 @@ class NotesDiffCallback(private  val oldList : List <Note>, private val newList:
         val newNote = newList[newItemPosition]
         return oldNote == newNote
     }
+
 
 }

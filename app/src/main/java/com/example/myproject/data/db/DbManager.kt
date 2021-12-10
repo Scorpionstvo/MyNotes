@@ -3,10 +3,7 @@ package com.example.myproject.data.db
 import android.content.ContentValues
 import android.database.sqlite.SQLiteDatabase
 import android.provider.BaseColumns
-import android.util.Log
-import com.example.myproject.project.note.Note
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
+import com.example.myproject.project.data.Note
 
 class DbManager(private val dbHelper: DbHelper) {
     private var db: SQLiteDatabase? = null
@@ -18,7 +15,6 @@ class DbManager(private val dbHelper: DbHelper) {
     fun openDb() {
 
         db = dbHelper.writableDatabase
-        Log.d("DDDDDD", "OPEN : $db, ${db?.isDbLockedByCurrentThread}")
 
     }
 
@@ -51,59 +47,57 @@ class DbManager(private val dbHelper: DbHelper) {
         db?.update(DbConstants.NOTES_TABLE, values, selection, null)
     }
 
-    suspend fun readDataFromTable(searchText: String, typeName: String): ArrayList<Note> =
-        withContext(Dispatchers.IO) {
-            val dataList = ArrayList<Note>()
-            val selection =
-                "${DbConstants.CONTENT} || ${DbConstants.TITLE} like ? AND ${DbConstants.TYPE} like ?"
-            val order = "${DbConstants.IS_TOP}  DESC, ${DbConstants.EDIT_TIME} DESC"
+    fun readDataFromTable(searchText: String, typeName: String): ArrayList<Note> {
 
-            val cursor = db?.query(
-                DbConstants.NOTES_TABLE,
-                null,
-                selection,
-                arrayOf("%$searchText%", typeName),
-                null,
-                null,
-                order
-            )
+        val dataList = ArrayList<Note>()
+        val selection =
+            "${DbConstants.CONTENT} || ${DbConstants.TITLE} like ? AND ${DbConstants.TYPE} like ?"
+        val order = "${DbConstants.IS_TOP}  DESC, ${DbConstants.EDIT_TIME} DESC"
 
-            while (cursor?.moveToNext()!!) {
-                val type = cursor.getString(cursor.getColumnIndex(DbConstants.TYPE))
-                val title = cursor.getString(cursor.getColumnIndex(DbConstants.TITLE))
-                val content = cursor.getString(cursor.getColumnIndex(DbConstants.CONTENT))
-                val id = cursor.getInt(cursor.getColumnIndex(BaseColumns._ID))
-                val editTime = cursor.getString(cursor.getColumnIndex(DbConstants.EDIT_TIME))
-                val isTopInt = cursor.getInt(cursor.getColumnIndex(DbConstants.IS_TOP))
-                val isTop = isTopInt == 1
-                val wallpaper = cursor.getString(cursor.getColumnIndex(DbConstants.WALLPAPER))
-                val removalTime = cursor.getLong(cursor.getColumnIndex(DbConstants.REMOVAL_TIME))
-                dataList.add(
-                    Note(
-                        type,
-                        title,
-                        content,
-                        id,
-                        editTime,
-                        isTop,
-                        wallpaper,
-                        removalTime
-                    )
+        val cursor = db?.query(
+            DbConstants.NOTES_TABLE,
+            null,
+            selection,
+            arrayOf("%$searchText%", typeName),
+            null,
+            null,
+            order
+        )
+
+        while (cursor?.moveToNext()!!) {
+            val type = cursor.getString(cursor.getColumnIndex(DbConstants.TYPE))
+            val title = cursor.getString(cursor.getColumnIndex(DbConstants.TITLE))
+            val content = cursor.getString(cursor.getColumnIndex(DbConstants.CONTENT))
+            val id = cursor.getInt(cursor.getColumnIndex(BaseColumns._ID))
+            val editTime = cursor.getString(cursor.getColumnIndex(DbConstants.EDIT_TIME))
+            val isTopInt = cursor.getInt(cursor.getColumnIndex(DbConstants.IS_TOP))
+            val isTop = isTopInt == 1
+            val wallpaper = cursor.getString(cursor.getColumnIndex(DbConstants.WALLPAPER))
+            val removalTime = cursor.getLong(cursor.getColumnIndex(DbConstants.REMOVAL_TIME))
+            dataList.add(
+                Note(
+                    type,
+                    title,
+                    content,
+                    id,
+                    editTime,
+                    isTop,
+                    wallpaper,
+                    removalTime
                 )
-            }
-            cursor.close()
-            return@withContext dataList
+            )
         }
+        cursor.close()
+        return dataList
+    }
 
 
-    fun removeItem(note: Note) {
-        val selection = BaseColumns._ID + "=${note.id}"
+    fun removeItem(id: Int) {
+        val selection = BaseColumns._ID + "=$id"
         db?.delete(DbConstants.NOTES_TABLE, selection, null)
     }
 
     fun closeDb() {
-        Log.d("DDDDDD", "CLOSE : $db, ${db?.isDbLockedByCurrentThread}")
-
         dbHelper.close()
     }
 }

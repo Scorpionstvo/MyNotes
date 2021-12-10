@@ -11,6 +11,7 @@ object DbConstants : BaseColumns {
     const val IS_TOP = "is_top"
     const val WALLPAPER = "wallpaper"
     const val REMOVAL_TIME = "removal_time"
+    const val IS_CHECKED = "is_checked"
 
     const val DATABASE_VERSION = 1
     const val DATABASE_NAME = "NotesDb.db"

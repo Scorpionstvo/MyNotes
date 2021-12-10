@@ -2,19 +2,22 @@ package com.example.myproject.project
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.fragment.app.FragmentTransaction
 import com.example.currentnote.R
 import com.example.myproject.project.detail.DetailFragment
 import com.example.myproject.project.detail.DetailFragmentParams
 import com.example.myproject.project.hidden.HiddenNotesFragment
-import com.example.myproject.project.list.NotesFragment
-import com.example.myproject.project.note.Note
+import com.example.myproject.project.list.NormalNotesFragment
+import com.example.myproject.project.model.DataModel
+import com.example.myproject.project.data.Note
 import com.example.myproject.project.password.PasswordFragment
 import com.example.myproject.project.password.PasswordFragmentParams
 import com.example.myproject.project.trash.TrashFragment
 
-class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFragment.OpenFragment,
+class MainActivity : AppCompatActivity(), NormalNotesFragment.OpenFragment, PasswordFragment.OpenFragment,
     HiddenNotesFragment.OpenFragment {
+    private val dataModel: DataModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,7 +34,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
         addAnimation(transaction)
         transaction.replace(
             R.id.fl_container,
-            NotesFragment.newInstance()
+            NormalNotesFragment.newInstance()
         ).commit()
     }
 
