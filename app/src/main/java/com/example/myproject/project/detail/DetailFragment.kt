@@ -287,11 +287,3 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
 
 
 }
-
-
-
-
-
-
-
-

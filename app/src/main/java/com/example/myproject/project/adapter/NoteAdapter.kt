@@ -15,13 +15,11 @@ import com.example.myproject.project.data.Note
 import com.example.myproject.project.util.DateFormatter
 import com.example.myproject.project.wallpaper.Wallpaper
 import kotlin.collections.ArrayList
-import kotlin.collections.HashSet
 
 class NoteAdapter(private val itemClickListener: ItemClickListener) :
     RecyclerView.Adapter<NoteAdapter.NoteHolder>() {
     private val noteList = ArrayList<AdapterItemModel>()
     private var isVisible = false
-    private var checkedId = HashSet<Int>()
 
     interface ItemClickListener {
         fun onClickItem(note: Note? = null)
@@ -61,13 +59,7 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
                 cardView.setBackgroundResource(wallpaper.primaryBackground)
                 tvTime.setTextColor(wallpaper.textColor)
             }
-
-                if (checkBox.visibility == View.GONE) {
-                    checkBox.isChecked = false
-                }
-                else
-                 checkBox.isChecked = adapterItem.isChecked
-
+            checkBox.isChecked = adapterItem.isChecked
         }
 
     }
@@ -83,27 +75,18 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
     }
 
     private fun bind(holder: NoteHolder, position: Int) {
-       holder.checkBox.visibility = if (isVisible) View.VISIBLE else View.GONE
-      //  if (holder.checkBox.isChecked) checkedId.add(noteList[holder.absoluteAdapterPosition].note.id)
-     //   holder.checkBox.isChecked = noteList[holder.absoluteAdapterPosition].isChecked
-       // if (holder.checkBox.isChecked) checkedId.add(noteList[holder.absoluteAdapterPosition].note.id) else checkedId.remove(noteList[holder.absoluteAdapterPosition].note.id)
+        holder.checkBox.visibility = if (isVisible) View.VISIBLE else View.GONE
 
         holder.initNote(noteList[position])
-     //   if (holder.checkBox.isChecked) checkedId.add(noteList[holder.absoluteAdapterPosition].note.id)
-    //    else checkedId.remove(noteList[holder.absoluteAdapterPosition].note.id)
+
         holder.checkBox.setOnClickListener {
             val note = noteList[holder.absoluteAdapterPosition].note
-         //
             itemClickListener.onClickItem(note)
-
         }
 
         holder.itemView.setOnClickListener {
             val note = noteList[holder.absoluteAdapterPosition].note
-         //   if (!holder.checkBox.isChecked) checkedId.add(note.id) else checkedId.remove(note.id)
-          itemClickListener.onClickItem(note)
-            holder.checkBox.toggle()
-
+            itemClickListener.onClickItem(note)
         }
 
         holder.itemView.setOnLongClickListener {
@@ -112,40 +95,10 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
         }
     }
 
-    fun allChecked(isChecked: Boolean) {
-        if (!isChecked) {
-            //       checkedNotes.clear()
-        } else {
-            for (i in noteList) {
-                //     if (checkedNotes.contains(i)) continue
-                //    else checkedNotes.add(i.note)
-            }
-        }
-        notifyDataSetChanged()
-    }
-
-    fun getCheckedId(): HashSet<Int> {
-        val checked = HashSet<Int>()
-        for (i in 0 until noteList.size) {
-            if (noteList[i].isChecked) checked.add(noteList[i].note.id)
-        }
-   //     Log.d("gggg", "$checked")
-        return checked
-    }
-
-    fun getCheckedItemCount(): Int {
-        return checkedId.size
-    }
-
     fun isShowCheckBox(show: Boolean) {
         isVisible = show
         notifyDataSetChanged()
     }
-
-    fun setCheckedId(newCheckedId: HashSet<Int>) {
-        checkedId = newCheckedId
-    }
-
 
     fun updateAdapter(listItems: ArrayList<AdapterItemModel>) {
         val diffCallback = NotesDiffCallback(noteList, listItems)
@@ -153,7 +106,6 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
         noteList.clear()
         noteList.addAll(listItems)
         diffResult.dispatchUpdatesTo(this)
-     //   Log.d("ggg", "update!!!! $noteList")
     }
 
     override fun getItemCount(): Int {

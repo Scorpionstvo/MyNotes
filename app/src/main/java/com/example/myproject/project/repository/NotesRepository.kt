@@ -4,14 +4,12 @@ import com.example.myproject.project.data.Note
 
 interface NotesRepository {
 
-   fun getNoteList(text: String, type: String) : ArrayList<Note>
+    fun getNoteList(text: String, type: String): ArrayList<Note>
 
     fun insertNote(note: Note)
 
-    fun updateNotes(note: Note)
+    fun updateNote(note: Note)
 
-    fun deleteNotes(id: Int)
-
-
-
+    fun deleteNote(id: Int)
+    
 }

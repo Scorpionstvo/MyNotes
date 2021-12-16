@@ -1,84 +1,76 @@
 package com.example.myproject.project.model
 
-import android.util.Log
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.example.myproject.project.data.AdapterItemModel
 import com.example.myproject.project.DbCommunicator
 import com.example.myproject.project.data.Note
-import kotlinx.coroutines.launch
 import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 
 open class DataModel : ViewModel() {
     private val dbCommunicator = DbCommunicator.newInstance()
-
+    private val checkedIdList = HashSet<Int>()
 
     val noteItemList: MutableLiveData<ArrayList<AdapterItemModel>> by lazy {
         MutableLiveData<ArrayList<AdapterItemModel>>()
     }
 
-    val checkedId: MutableLiveData<HashSet<Int>> by lazy {
-        MutableLiveData<HashSet<Int>>()
-    }
-
-    fun getAdapterItemList(text: String, type: String): ArrayList<AdapterItemModel> {
-        viewModelScope.launch {
-
-            val noteList = dbCommunicator.getNoteList(text, type)
-            Log.d("jjjj", " note ${noteItemList.value}")
-            val adapterItemList = ArrayList<AdapterItemModel>()
-            for (i in 0 until noteList.size) {
-                adapterItemList.add(AdapterItemModel(noteList[i], check(noteList[i].id)))
-            }
-            noteItemList.value = adapterItemList
+    fun getAdapterItemList(text: String, type: String) {
+       val noteList = dbCommunicator.getNoteList(text, type)
+        val adapterItemList = ArrayList<AdapterItemModel>()
+        for (i in 0 until noteList.size) {
+            adapterItemList.add(AdapterItemModel(noteList[i], check(noteList[i].id)))
         }
-        Log.d("jjjj", " no ${noteItemList.value}")
-        return noteItemList.value!!
+        noteItemList.value = adapterItemList
     }
-
-
-    fun deleteNote(id: Int) {
-        dbCommunicator.deleteNotes(id)
-    }
-
-    fun updateNote(note: Note) {
-        dbCommunicator.updateNotes(note)
-    }
-
 
     fun insertNote(note: Note) {
         dbCommunicator.insertNote(note)
     }
 
+    fun deleteNote(id: Int) {
+        dbCommunicator.deleteNote(id)
+    }
+
+    fun updateNote(note: Note) {
+        dbCommunicator.updateNote(note)
+    }
 
     fun allChecked(check: Boolean) {
-        if (checkedId.value == null) checkedId.value = HashSet()
+        val itemListCopy  = noteItemList.value
         if (check) {
-            for (i in noteItemList.value!!) {
-                checkedId.value!!.add(i.note.id)
+            for (i in 0 until itemListCopy!!.size) {
+                itemListCopy[i] = AdapterItemModel(itemListCopy[i].note, check)
+                checkedIdList.add(itemListCopy[i].note.id)
             }
+
         } else {
-            checkedId.value!!.clear()
+            checkedIdList.clear()
+            for (i in 0 until itemListCopy!!.size) {
+                itemListCopy[i] = AdapterItemModel(itemListCopy[i].note, check)
+            }
         }
+          noteItemList.value = itemListCopy
     }
 
     fun getCheckedId(): HashSet<Int> {
-        val a = HashSet<Int>()
-        return if (checkedId.value == null) {
-            a
-        } else checkedId.value!!
+        return checkedIdList
     }
 
     fun updateCheckedList(id: Int) {
-        if (checkedId.value == null) checkedId.value = HashSet()
-        if (checkedId.value!!.contains(id)) checkedId.value?.remove(id) else checkedId.value?.add(id)
+        val itemListCopy  = noteItemList.value
+        if (checkedIdList.contains(id)) checkedIdList.remove(id) else checkedIdList.add(id)
+        for (i in 0 until  itemListCopy!!.size) {
+            if (itemListCopy[i].note.id == id)
+                itemListCopy[i] = AdapterItemModel(itemListCopy[i].note, !itemListCopy[i].isChecked)
+        }
+        noteItemList.value = itemListCopy
+
     }
 
     private fun check(id: Int): Boolean {
-        return if (checkedId.value == null) {
-            false
-        } else checkedId.value!!.contains(id)
+        return if (checkedIdList.isEmpty()) false else checkedIdList.contains(id)
     }
 
     fun closeBd() {

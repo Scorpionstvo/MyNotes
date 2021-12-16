@@ -29,7 +29,6 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private val adapter = NoteAdapter(this)
     private var list = ArrayList<AdapterItemModel>()
     private var isListView = false
-    private var count = 0;
 
     private val type = Type.IS_NORMAL.name
 
@@ -59,7 +58,6 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.rcList?.adapter = adapter
-        dataModel.getAdapterItemList("", type)
         initDataModelContract()
         recyclerViewStateCreated()
         initToolbar()
@@ -69,17 +67,12 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         requireActivity().onBackPressedDispatcher.addCallback(callback)
     }
 
-
     private fun initDataModelContract() {
         dataModel.noteItemList.observe(viewLifecycleOwner, {
-            list = dataModel.noteItemList.value!!
+            list = it
+            list.sort()
             adapter.updateAdapter(list)
             binding?.tvListEmpty?.visibleIf(list.isEmpty())
-        })
-
-        dataModel.checkedId.observe(viewLifecycleOwner, {
-            count = dataModel.checkedId.value!!.size
-            adapter.updateAdapter(dataModel.getAdapterItemList("", type))
         })
     }
 
@@ -124,16 +117,15 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                 R.id.chooseAll -> {
                     val check = dataModel.getCheckedId().size < list.size
                     dataModel.allChecked(check)
-                    dataModel.getAdapterItemList("", type)
                     val newCount = dataModel.getCheckedId().size
                     binding?.tvTitle?.text =
                         resources.getString(R.string.selected) + " $newCount"
                     bottomMenuEnable(newCount > 0)
 
                     var isAnchor = false
-                    for (i in list) {
-                        if (dataModel.getCheckedId().contains(i.note.id)) {
-                            if (!i.note.isTop) isAnchor = true
+                    for (adapterItemModel in list) {
+                        if (dataModel.getCheckedId().contains(adapterItemModel.note.id)) {
+                            if (!adapterItemModel.note.isTop) isAnchor = true
                         }
                     }
 
@@ -213,17 +205,15 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             val checkedId: HashSet<Int> = dataModel.getCheckedId()
             when (it.itemId) {
                 R.id.hide -> {
-                    for (item in list) {
-                        if (checkedId.contains(item.note.id)) {
-                            checkedId.remove(item.note.id)
-                            moveToPersonalFolder(item.note)
-                            adapter.notifyItemRemoved(item.note.id)
-                        }
+                    for (itemModel in list) {
+                        if (checkedId.contains(itemModel.note.id))
+                            moveToPersonalFolder(itemModel.note)
+                        adapter.notifyItemRemoved(itemModel.note.id)
                     }
 
                     val noteMoved = this.resources.getQuantityString(
                         R.plurals.plurals_note_moved,
-                        checkedId!!.size
+                        checkedId.size
                     )
                     Toast.makeText(
                         context,
@@ -232,29 +222,28 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     )
                         .show()
                     goToNormalView()
+                    dataModel.getAdapterItemList("", type)
                 }
 
                 R.id.pinToTopOfList -> {
                     if (it.title.equals(resources.getString(R.string.anchor)))
-                        for (item in list) {
-                            if (checkedId.contains(item.note.id)) {
-                                checkedId.remove(item.note.id)
-                                moveTop(item.note)
-                                adapter.notifyItemRemoved(item.note.id)
-                            }
+                        for (itemModel in list) {
+                            if (checkedId.contains(itemModel.note.id))
+                                moveTop(itemModel.note)
+                            adapter.notifyItemRemoved(itemModel.note.id)
                         }
-                    else
-                        for (item in list) {
-                            if (checkedId.contains(item.note.id)) {
-                                checkedId.remove(item.note.id)
-                                removeTop(item.note)
-                                adapter.notifyItemRemoved(item.note.id)
-                            }
+                    else {
+                        for (itemModel in list) {
+                            if (checkedId.contains(itemModel.note.id))
+                                removeTop(itemModel.note)
+                            adapter.notifyItemRemoved(itemModel.note.id)
                         }
 
+                        it.setIcon(R.drawable.ic_pin)
+                        it.setTitle(R.string.anchor)
+                    }
+                    dataModel.getAdapterItemList("", type)
                     goToNormalView()
-                    it.setIcon(R.drawable.ic_pin)
-                    it.setTitle(R.string.anchor)
                 }
                 R.id.deleteNotes -> {
                     val alertDialog = AlertDialog.Builder(context)
@@ -276,14 +265,12 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     alertDialog.setPositiveButton(
                         R.string.ok
                     ) { dialog, _ ->
-                        val list = dataModel.noteItemList.value
-                        for (item in list!!) {
-                            if (checkedId.contains(item.note.id)) {
-                                checkedId.remove(item.note.id)
-                                moveToTrash(item.note)
-                                adapter.notifyItemRemoved(item.note.id)
-                            }
+                        for (itemModel in list) {
+                            if (checkedId.contains(itemModel.note.id))
+                                moveToTrash(itemModel.note)
+                            adapter.notifyItemRemoved(itemModel.note.id)
                         }
+                        dataModel.getAdapterItemList("", type)
                         dialog.dismiss()
                         goToNormalView()
                     }
@@ -325,9 +312,9 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.tvTitle?.text = ""
         binding?.tbNotes?.menu?.clear()
         binding?.tbNotes?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
+        dataModel.allChecked(false)
         adapter.isShowCheckBox(false)
         dataModel.allChecked(false)
-        dataModel.getAdapterItemList("", type)
     }
 
     override fun onClickItem(note: Note?) {
@@ -335,19 +322,15 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             (activity as OpenFragment).openDetailFragment(note!!, false)
         } else {
             dataModel.updateCheckedList(note!!.id)
-            adapter.notifyItemChanged(note!!.id)
-
-            dataModel.getAdapterItemList("", type)
-            val count = dataModel.checkedId.value?.size
-
+            val count = dataModel.getCheckedId().size
             binding?.tvTitle?.text = resources.getString(R.string.selected) + " $count"
             if (count != 0) {
                 bottomMenuEnable(true)
                 var isAnchor = false
-                val checkedId = dataModel.checkedId.value
-                for (i in list) {
-                    if (checkedId!!.contains(i.note.id))
-                        if (!i.note.isTop) isAnchor = true
+                val checkedId = dataModel.getCheckedId()
+                for (adapterItemModel in list) {
+                    if (checkedId.contains(adapterItemModel.note.id))
+                        if (!adapterItemModel.note.isTop) isAnchor = true
                 }
                 changeIcon(isAnchor)
             } else bottomMenuEnable(false)
@@ -394,12 +377,15 @@ class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        dataModel.getAdapterItemList("", type)
+    }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        callback.remove()
         binding?.rcList?.adapter = null
-
+        callback.remove()
     }
 
     override fun onDestroy() {

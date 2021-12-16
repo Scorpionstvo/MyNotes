@@ -7,21 +7,25 @@ import com.example.myproject.project.repository.NotesRepository
 class DbCommunicator : NotesRepository {
     private val dbManager = MyApplication.dbManager
 
+    init {
+        dbManager.openDb()
+    }
+
     companion object {
         fun newInstance() = DbCommunicator()
+
     }
 
     override fun getNoteList(text: String, type: String): ArrayList<Note> {
-        dbManager.openDb()
-           return dbManager.readDataFromTable(text, type)
-        }
+        return dbManager.readDataFromTable(text, type)
+    }
 
 
-    override fun updateNotes(note: Note) {
+    override fun updateNote(note: Note) {
         dbManager.updateItem(note)
     }
 
-    override fun deleteNotes(id: Int) {
+    override fun deleteNote(id: Int) {
         dbManager.removeItem(id)
     }
 

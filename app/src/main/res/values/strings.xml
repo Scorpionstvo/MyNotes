@@ -49,6 +49,7 @@
     <string name="restore">restore</string>
     <string name="shift">shift</string>
     <string name="title_toolbar_trash_fragment">Trash</string>
+    <string name="click_trash_item">Unable to open note"</string>
 
 
     <!-- Hidden Fragment -->

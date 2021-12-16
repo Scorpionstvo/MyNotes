@@ -14,14 +14,14 @@ data class Note(
     var removalTime: Long = 0
 ) : Parcelable, Comparable<Note> {
     constructor(parcel: Parcel) : this(
-            parcel.readString().toString(),
-            parcel.readString().toString(),
-            parcel.readString().toString(),
-            parcel.readInt(),
-            parcel.readString().toString(),
-            parcel.readByte() != 0.toByte(),
-            parcel.readString(),
-            parcel.readLong()
+        parcel.readString().toString(),
+        parcel.readString().toString(),
+        parcel.readString().toString(),
+        parcel.readInt(),
+        parcel.readString().toString(),
+        parcel.readByte() != 0.toByte(),
+        parcel.readString(),
+        parcel.readLong()
     )
 
     override fun writeToParcel(parcel: Parcel, flags: Int) {
@@ -54,6 +54,5 @@ data class Note(
         if (!this.isTop && !other.isTop) result = other.editTime.compareTo(this.editTime)
         return result
     }
-
 
 }

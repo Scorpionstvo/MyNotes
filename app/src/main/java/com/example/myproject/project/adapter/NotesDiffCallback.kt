@@ -3,7 +3,10 @@ package com.example.myproject.project.adapter
 import androidx.recyclerview.widget.DiffUtil
 import com.example.myproject.project.data.AdapterItemModel
 
-class NotesDiffCallback(private  val oldList : List <AdapterItemModel>, private val newList: List<AdapterItemModel>) : DiffUtil.Callback() {
+class NotesDiffCallback(
+    private val oldList: List<AdapterItemModel>,
+    private val newList: List<AdapterItemModel>
+) : DiffUtil.Callback() {
 
     override fun getOldListSize(): Int = oldList.size
 
@@ -20,6 +23,5 @@ class NotesDiffCallback(private  val oldList : List <AdapterItemModel>, private 
         val newNote = newList[newItemPosition]
         return oldNote == newNote
     }
-
 
 }
