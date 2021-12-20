@@ -30,7 +30,7 @@
     </LinearLayout>
 
     <TextView
-        android:id="@+id/tvGreeting"
+        android:id="@+id/tv_list_empty"
         style="@style/TextViewListEmpty"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

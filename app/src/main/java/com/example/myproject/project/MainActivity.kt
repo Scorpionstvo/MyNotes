@@ -7,13 +7,13 @@ import com.example.currentnote.R
 import com.example.myproject.project.detail.DetailFragment
 import com.example.myproject.project.detail.DetailFragmentParams
 import com.example.myproject.project.hidden.HiddenNotesFragment
-import com.example.myproject.project.list.NotesFragment
-import com.example.myproject.project.note.Note
+import com.example.myproject.project.list.NormalNotesFragment
+import com.example.myproject.project.data.Note
 import com.example.myproject.project.password.PasswordFragment
 import com.example.myproject.project.password.PasswordFragmentParams
 import com.example.myproject.project.trash.TrashFragment
 
-class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFragment.OpenFragment,
+class MainActivity : AppCompatActivity(), NormalNotesFragment.OpenFragment, PasswordFragment.OpenFragment,
     HiddenNotesFragment.OpenFragment {
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -31,7 +31,7 @@ class MainActivity : AppCompatActivity(), NotesFragment.OpenFragment, PasswordFr
         addAnimation(transaction)
         transaction.replace(
             R.id.fl_container,
-            NotesFragment.newInstance()
+            NormalNotesFragment.newInstance()
         ).commit()
     }
 

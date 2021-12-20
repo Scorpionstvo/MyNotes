@@ -17,7 +17,7 @@ import com.example.currentnote.*
 import com.example.currentnote.databinding.FragmentDetailBinding
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.application.MyApplication
-import com.example.myproject.project.note.Note
+import com.example.myproject.project.data.Note
 import com.example.myproject.project.util.Constants
 import com.example.myproject.project.wallpaper.Wallpaper
 import com.example.myproject.project.wallpaper.WallpaperAdapter
