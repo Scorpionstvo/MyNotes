@@ -83,10 +83,10 @@ class PasswordFragment : DialogFragment() {
     private fun togglePasswordVisibility(editText: EditText, imageButton: ImageButton) {
         if (isVisiblePassword) {
             editText.transformationMethod = PasswordTransformationMethod.getInstance()
-            imageButton.setImageResource(R.drawable.ic_visibility_on)
+            imageButton.setImageResource(R.drawable.ic_visibility_off)
         } else {
             editText.transformationMethod = null
-            imageButton.setImageResource(R.drawable.ic_visibility_off)
+            imageButton.setImageResource(R.drawable.ic_visibility_on)
         }
         isVisiblePassword = !isVisiblePassword
     }

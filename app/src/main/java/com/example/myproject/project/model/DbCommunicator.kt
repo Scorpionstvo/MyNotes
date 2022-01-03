@@ -7,13 +7,13 @@ import com.example.myproject.project.repository.NotesRepository
 class DbCommunicator : NotesRepository {
     private val dbManager = MyApplication.dbManager
 
-    init {
-        dbManager.openDb()
-    }
-
     companion object {
         fun newInstance() = DbCommunicator()
 
+    }
+
+    fun openDb() {
+        dbManager.openDb()
     }
 
     override fun getNoteList(text: String, type: String): ArrayList<Note> {

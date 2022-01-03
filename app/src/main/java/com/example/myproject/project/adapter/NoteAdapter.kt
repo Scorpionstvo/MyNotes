@@ -1,5 +1,6 @@
 package com.example.myproject.project.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -7,6 +8,7 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
+import androidx.core.os.persistableBundleOf
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.currentnote.R
@@ -36,23 +38,24 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
         private val pin: ImageView = item.findViewById(R.id.imTop)
 
         fun initNote(adapterItem: AdapterItemModel) {
-            if (adapterItem.note.title.isEmpty()) tvTitle.visibility = View.GONE
+            val note = adapterItem.note
+            if (note.title.isEmpty()) tvTitle.visibility = View.GONE
             else {
                 tvTitle.visibility = View.VISIBLE
-                tvTitle.text = adapterItem.note.title
+                tvTitle.text = note.title
             }
-            if (adapterItem.note.content.isEmpty()) {
+            if (note.content.isEmpty()) {
                 tvContent.visibility = View.GONE
             } else {
                 tvContent.visibility = View.VISIBLE
-                tvContent.text = adapterItem.note.content
+                tvContent.text = note.content
             }
-            tvTime.text = DateFormatter.dateFormat(adapterItem.note.editTime)
-            if (adapterItem.note.isTop) {
+            tvTime.text = DateFormatter.dateFormat(note.editTime)
+            if (note.isTop) {
                 pin.visibility = View.VISIBLE
             } else pin.visibility = View.GONE
 
-            if (adapterItem.note.wallpaperName != null) {
+            if (note.wallpaperName != null) {
                 val wallpaper: Wallpaper = Wallpaper.valueOf(adapterItem.note.wallpaperName!!)
                 tvTitle.setTextColor(wallpaper.textColor)
                 tvContent.setTextColor(wallpaper.textColor)
@@ -60,6 +63,7 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
                 tvTime.setTextColor(wallpaper.textColor)
             }
             checkBox.isChecked = adapterItem.isChecked
+            checkBox.tag = note.id
         }
 
     }
@@ -76,7 +80,6 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
 
     private fun bind(holder: NoteHolder, position: Int) {
         holder.checkBox.visibility = if (isVisible) View.VISIBLE else View.GONE
-
         holder.initNote(noteList[position])
 
         holder.checkBox.setOnClickListener {
@@ -87,6 +90,7 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
         holder.itemView.setOnClickListener {
             val note = noteList[holder.absoluteAdapterPosition].note
             itemClickListener.onClickItem(note)
+            holder.checkBox.isChecked = true
         }
 
         holder.itemView.setOnLongClickListener {

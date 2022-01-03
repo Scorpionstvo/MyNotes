@@ -12,12 +12,13 @@ import android.view.*
 import androidx.activity.OnBackPressedCallback
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.currentnote.*
 import com.example.currentnote.databinding.FragmentDetailBinding
 import com.example.myproject.project.type.Type
-import com.example.myproject.project.application.MyApplication
 import com.example.myproject.project.data.Note
+import com.example.myproject.project.model.DataModel
 import com.example.myproject.project.util.Constants
 import com.example.myproject.project.wallpaper.Wallpaper
 import com.example.myproject.project.wallpaper.WallpaperAdapter
@@ -27,7 +28,7 @@ import kotlin.collections.ArrayList
 
 class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
     private var binding: FragmentDetailBinding? = null
-    private val dbManager = MyApplication.dbManager
+    private val dataModel: DataModel by viewModels()
     lateinit var note: Note
     private val wallpapers: ArrayList<Wallpaper> = ArrayList(EnumSet.allOf(Wallpaper::class.java))
     private val adapter = WallpaperAdapter(this, wallpapers)
@@ -102,7 +103,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                 R.id.delete -> {
                     val alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
-                    val message = "${resources.getString(R.string.delete)} заметку?"
+                    val message = "${R.string.noteDeleting}"
                     alertDialog.setMessage(message)
                     alertDialog.setNegativeButton(
                         R.string.undo
@@ -111,7 +112,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                     }
                     alertDialog.setPositiveButton(
                         R.string.ok
-                    ) { dialog, _ ->
+                    ) { _, _ ->
                         if (binding?.rcWallpapers?.visibility == View.VISIBLE) binding?.rcWallpapers?.visibility =
                             View.GONE
                         saveNote(Type.IS_TRASHED.name)
@@ -142,7 +143,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
                 note.removalTime = System.currentTimeMillis()
                 note.typeName = typeName
             }
-            dbManager.insertToTable(note)
+            dataModel.insertNote(note)
             isNew = false
         } else {
             if (savedTitle != note.title || savedContent != note.content || wallpaperName != note.wallpaperName) {
@@ -153,7 +154,7 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
             note.content = savedContent
             note.wallpaperName = wallpaperName
             if (typeName == Type.IS_TRASHED.name) note.removalTime = System.currentTimeMillis()
-            dbManager.updateItem(note)
+            dataModel.updateNote(note)
         }
         isWasSave = true
     }
@@ -239,11 +240,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         binding?.rcWallpapers?.layoutManager = linearLayoutManager
     }
 
-    override fun onResume() {
-        super.onResume()
-        dbManager.openDb()
-    }
-
     override fun onClickElement(wallpaper: Wallpaper) {
         if (wallpaper == Wallpaper.INITIAL || wallpaper == null) {
             binding!!.etTitle.setTextColor(resources.getColor(R.color.white))
@@ -276,10 +272,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         }
     }
 
-    override fun onStop() {
-        super.onStop()
-        dbManager.closeDb()
-    }
 
     override fun onDestroyView() {
         super.onDestroyView()
@@ -292,7 +284,6 @@ class DetailFragment : Fragment(), WallpaperAdapter.TryOnWallpaper {
         super.onDestroy()
         binding = null
     }
-
 
 }
 

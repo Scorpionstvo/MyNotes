@@ -4,30 +4,31 @@ import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentHiddenNotesBinding
-import com.example.myproject.project.data.AdapterItemModel
 import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.list.NormalNotesFragment
 import com.example.myproject.project.model.DataModel
 import com.example.myproject.project.data.Note
 import com.example.myproject.project.util.Constants
-import kotlin.collections.ArrayList
 
 class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private var binding: FragmentHiddenNotesBinding? = null
     private val dataModel: DataModel by viewModels()
     private val adapter = NoteAdapter(this)
-    private var hiddenList = ArrayList<AdapterItemModel>()
     private var isListView = false
 
     private val type = Type.IS_HIDDEN.name
@@ -66,10 +67,8 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     private fun initDataModelContract() {
         dataModel.noteItemList.observe(viewLifecycleOwner, {
-            hiddenList = it
-            hiddenList.sort()
-            adapter.updateAdapter(hiddenList)
-            binding?.tvHiddenListEmpty?.visibleIf(hiddenList.isEmpty())
+            adapter.updateAdapter(it)
+            binding?.tvHiddenListEmpty?.visibleIf(it.isEmpty())
         })
     }
 
@@ -91,12 +90,12 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         if (isListView) {
             binding?.rcHiddenList?.layoutManager = GridLayoutManager(context, 1)
             binding?.tbHiddenNotes?.menu?.findItem(R.id.list)?.icon =
-                resources.getDrawable(R.drawable.ic_grid)
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_grid)
         } else {
             binding?.rcHiddenList?.layoutManager =
                 StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
             binding?.tbHiddenNotes?.menu?.findItem(R.id.list)?.icon =
-                resources.getDrawable(R.drawable.ic_list)
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_list)
         }
     }
 
@@ -112,20 +111,14 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     saveTableVariant(isListView)
                 }
                 R.id.chooseAll -> {
-                    val check = dataModel.getCheckedId().size < hiddenList.size
+                    val check = dataModel.getCheckedId().size < dataModel.noteItemList.value!!.size
                     dataModel.allChecked(check)
-                    dataModel.getAdapterItemList("", type)
+                    it.changeColor(check)
                     val newCount = dataModel.getCheckedId().size
                     binding?.tvHiddenNotesTitle?.text =
                         resources.getString(R.string.selected) + " $newCount"
                     bottomMenuEnable(newCount > 0)
-
-                    var isAnchor = false
-                    for (adapterItemModel in hiddenList) {
-                        if (dataModel.getCheckedId().contains(adapterItemModel.note.id))
-                            if (!adapterItemModel.note.isTop) isAnchor = true
-                    }
-
+                    val isAnchor = dataModel.defineAnchor()
                     if (isAnchor) {
                         changeIcon(true)
                     } else {
@@ -137,6 +130,15 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             }
             true
         }
+    }
+
+    private fun MenuItem.changeColor(color: Boolean) {
+        if (color) icon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+            ContextCompat.getColor(
+                requireContext(), R.color.blue
+            ), BlendModeCompat.SRC_ATOP
+        )
+        else icon.clearColorFilter()
     }
 
     private fun saveTableVariant(isListView: Boolean) {
@@ -166,39 +168,28 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
 
     private fun initBottomNavigationView() {
+        val checkedId: HashSet<Int> = dataModel.getCheckedId()
         binding?.btMenuHiddenNotes?.setOnItemSelectedListener {
             val checkedId: HashSet<Int> = dataModel.getCheckedId()
             when (it.itemId) {
                 R.id.declassify -> {
-                    for (itemModel in hiddenList) {
-                        if (checkedId.contains(itemModel.note.id)) {
-                            declassify(itemModel.note)
-                            adapter.notifyItemRemoved(itemModel.note.id)
-                        }
+                    checkedId.forEach { id ->
+                        dataModel.movieToNormal(id)
+                        adapter.notifyItemRemoved(id)
                     }
                     dataModel.getAdapterItemList("", type)
                     goToNormalView()
                 }
                 R.id.pinToTopOfList -> {
-                    if (it.title.equals(resources.getString(R.string.anchor)))
-                        for (itemModel in hiddenList) {
-                            if (checkedId.contains(itemModel.note.id)) {
-                                moveTop(itemModel.note)
-                                adapter.notifyItemRemoved(itemModel.note.id)
-                            }
-                        }
-                    else
-                        for (item in hiddenList) {
-                            if (checkedId.contains(item.note.id)) {
-                                checkedId.remove(item.note.id)
-                                removeTop(item.note)
-                                adapter.notifyItemRemoved(item.note.id)
-                            }
-                        }
-                    dataModel.getAdapterItemList("", type)
-                    goToNormalView()
+                    val isAnchor = dataModel.defineAnchor()
+                    checkedId.forEach { id ->
+                        dataModel.moveInList(isAnchor, id)
+                        adapter.notifyItemRemoved(id)
+                    }
                     it.setIcon(R.drawable.ic_pin)
                     it.setTitle(R.string.anchor)
+                    dataModel.getAdapterItemList("", type)
+                    goToNormalView()
                 }
                 R.id.delete -> {
                     val alertDialog = AlertDialog.Builder(context)
@@ -219,14 +210,12 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     alertDialog.setPositiveButton(
                         R.string.ok
                     ) { dialog, _ ->
-                        for (itemModel in hiddenList) {
-                            if (checkedId.contains(itemModel.note.id)) {
-                                moveToTrash(itemModel.note)
-                                adapter.notifyItemRemoved(itemModel.note.id)
-                            }
+                        checkedId.forEach { id ->
+                            dataModel.movieToTrash(id)
+                            adapter.notifyItemRemoved(id)
                         }
-                        dialog.dismiss()
                         dataModel.getAdapterItemList("", type)
+                        dialog.dismiss()
                         goToNormalView()
                     }
                     val alert = alertDialog.create()
@@ -237,27 +226,6 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         }
     }
 
-    private fun moveTop(note: Note) {
-        note.isTop = true
-        dataModel.updateNote(note)
-    }
-
-    private fun removeTop(note: Note) {
-        note.isTop = false
-        dataModel.updateNote(note)
-    }
-
-    private fun declassify(note: Note) {
-        note.typeName = Type.IS_NORMAL.name
-        dataModel.updateNote(note)
-    }
-
-    private fun moveToTrash(note: Note) {
-        note.typeName = Type.IS_TRASHED.name
-        note.removalTime = System.currentTimeMillis()
-        dataModel.updateNote(note)
-    }
-
     private fun goToNormalView() {
         binding?.btMenuHiddenNotes?.visibility = View.GONE
         binding?.fbAdd?.visibility = View.VISIBLE
@@ -266,7 +234,7 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.tbHiddenNotes?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
         adapter.isShowCheckBox(false)
         dataModel.allChecked(false)
-
+        binding?.tbHiddenNotes?.menu?.findItem(R.id.chooseAll)?.changeColor(false)
     }
 
 
@@ -287,12 +255,7 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.selected) + " $count"
             if (count != 0) {
                 bottomMenuEnable(true)
-                var isAnchor = false
-                val checkedId = dataModel.getCheckedId()
-                for (adapterItemModel in hiddenList) {
-                    if (checkedId.contains(adapterItemModel.note.id))
-                        if (!adapterItemModel.note.isTop) isAnchor = true
-                }
+                val isAnchor = dataModel.defineAnchor()
                 changeIcon(isAnchor)
             } else bottomMenuEnable(false)
         }
@@ -363,7 +326,6 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     override fun onDestroy() {
         binding = null
-        dataModel.closeBd()
         super.onDestroy()
     }
 }

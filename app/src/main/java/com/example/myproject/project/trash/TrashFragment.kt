@@ -5,33 +5,32 @@ import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentTrashBinding
-import com.example.myproject.project.data.AdapterItemModel
 import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
 import com.example.myproject.project.model.DataModel
 import com.example.myproject.project.data.Note
 import com.example.myproject.project.util.Constants
-import java.util.*
-import kotlin.collections.ArrayList
 import kotlin.collections.HashSet
 
 class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
     private var binding: FragmentTrashBinding? = null
     private val dataModel: DataModel by viewModels()
-    private var trashList = ArrayList<AdapterItemModel>()
     private val adapter = NoteAdapter(this)
     private var isListView = false
-    private var count = 0
 
     private val type = Type.IS_TRASHED.name
 
@@ -61,18 +60,10 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
 
     private fun initDataModelContract() {
         dataModel.noteItemList.observe(viewLifecycleOwner, {
-            trashList = it
-            val iterator = trashList.iterator()
-            while (iterator.hasNext()) {
-                val itemModel: AdapterItemModel = iterator.next()
-                if (deleteTimer(itemModel.note)) trashList.remove(itemModel)
-            }
-            trashList.sort()
-            adapter.updateAdapter(trashList)
-            binding?.tvTrashListEmpty?.visibleIf(trashList.isEmpty())
+            adapter.updateAdapter(it)
+            binding?.tvTrashListEmpty?.visibleIf(it.isEmpty())
         })
     }
-
 
     private fun View.visibleIf(show: Boolean) {
         visibility = if (show) View.VISIBLE else View.GONE
@@ -92,10 +83,10 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         if (isListView) {
             binding!!.rcTrashList.layoutManager = GridLayoutManager(context, 1)
             binding!!.tbTrashCan.menu.findItem(R.id.list).icon =
-                resources.getDrawable(R.drawable.ic_grid)
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_grid)
         } else {
             binding!!.tbTrashCan.menu.findItem(R.id.list).icon =
-                resources.getDrawable(R.drawable.ic_list)
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_list)
             binding!!.rcTrashList.layoutManager =
                 StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
         }
@@ -114,16 +105,45 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
                     saveTableVariant(isListView)
                 }
                 R.id.chooseAll -> {
-                    val check = dataModel.getCheckedId().size < trashList.size
+                    val check = dataModel.getCheckedId().size < dataModel.noteItemList.value!!.size
                     dataModel.allChecked(check)
-                    dataModel.getAdapterItemList("", type)
+                    it.changeColor(check)
                     val newCount = dataModel.getCheckedId().size
                     binding?.tvTrashTitle?.text =
                         resources.getString(R.string.selected) + " $newCount"
                     bottomMenuEnable(newCount > 0)
+                    val isAnchor = dataModel.defineAnchor()
+                    if (isAnchor) {
+                        changeIcon(true)
+                    } else {
+                        if (newCount != 0) {
+                            changeIcon(false)
+                        }
+                    }
                 }
             }
             true
+        }
+    }
+
+
+    private fun MenuItem.changeColor(color: Boolean) {
+        if (color) icon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+            ContextCompat.getColor(
+                requireContext(), R.color.blue
+            ), BlendModeCompat.SRC_ATOP
+        )
+        else icon.clearColorFilter()
+    }
+
+    private fun changeIcon(isAnchor: Boolean) {
+        val menuItem = binding?.btMenuTrash?.menu?.findItem(R.id.pinToTopOfList)
+        if (isAnchor) {
+            menuItem?.setIcon(R.drawable.ic_pin)
+            menuItem?.setTitle(R.string.anchor)
+        } else {
+            menuItem?.setIcon(R.drawable.ic_unfasten)
+            menuItem?.setTitle(R.string.unfasten)
         }
     }
 
@@ -158,12 +178,9 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
             val checkedId: HashSet<Int> = dataModel.getCheckedId()
             when (it.itemId) {
                 R.id.restore -> {
-                    for (itemModel in trashList) {
-                        if (checkedId.contains(itemModel.note.id)) {
-                            checkedId.remove(itemModel.note.id)
-                            restore(itemModel.note)
-                            adapter.notifyItemRemoved(itemModel.note.id)
-                        }
+                    checkedId.forEach { id ->
+                        dataModel.movieToNormal(id)
+                        adapter.notifyItemRemoved(id)
                     }
                     dataModel.getAdapterItemList("", type)
                     goToNormalView()
@@ -188,12 +205,9 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
                         R.string.ok
                     )
                     { dialog, _ ->
-                        for (itemModel in trashList) {
-                            if (checkedId.contains(itemModel.note.id)) {
-                                deletePermanently(itemModel.note)
-                                adapter.notifyItemRemoved(itemModel.note.id)
-                            }
-
+                        checkedId.forEach { id ->
+                            dataModel.deleteNote(id)
+                            adapter.notifyItemRemoved(id)
                         }
                         dialog.dismiss()
                         goToNormalView()
@@ -208,15 +222,6 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         }
     }
 
-    private fun restore(note: Note) {
-        note.typeName = Type.IS_NORMAL.name
-        note.removalTime = 0
-        dataModel.updateNote(note)
-    }
-
-    private fun deletePermanently(note: Note) {
-        dataModel.deleteNote(note.id)
-    }
 
     private fun goToNormalView() {
         binding?.btMenuTrash?.visibility = View.GONE
@@ -225,24 +230,14 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.tbTrashCan?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
         adapter.isShowCheckBox(false)
         dataModel.allChecked(false)
-    }
-
-    private fun deleteTimer(note: Note): Boolean {
-        val calendar = Calendar.getInstance()
-        val date = Date(note.removalTime)
-        calendar.time = date
-        val now = Calendar.getInstance()
-        now.add(Calendar.DAY_OF_YEAR, -30)
-        return calendar.get(Calendar.DAY_OF_YEAR) < now.get(Calendar.DAY_OF_YEAR) || calendar.get(
-            Calendar.YEAR
-        ) < now.get(Calendar.YEAR)
+        binding?.tbTrashCan?.menu?.findItem(R.id.chooseAll)?.changeColor(false)
     }
 
 
     override fun onClickItem(note: Note?) = if (binding?.btMenuTrash?.visibility == View.VISIBLE) {
         dataModel.updateCheckedList(note!!.id)
         dataModel.getAdapterItemList("", type)
-        count = dataModel.getCheckedId().size
+        val count = dataModel.getCheckedId().size
         binding?.tvTrashTitle?.text = resources.getString(R.string.selected) + " $count"
         if (count > 0) bottomMenuEnable(true) else bottomMenuEnable(false)
     } else {
@@ -301,7 +296,6 @@ class TrashFragment : Fragment(), NoteAdapter.ItemClickListener {
     override fun onDestroy() {
         super.onDestroy()
         binding = null
-        dataModel.closeBd()
     }
 
 }
