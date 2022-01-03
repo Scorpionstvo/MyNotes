@@ -8,31 +8,27 @@ import android.widget.PopupMenu
 import android.widget.SearchView
 import android.widget.Toast
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentNotesBinding
 import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
-import com.example.myproject.project.application.MyApplication
-import com.example.myproject.project.note.Note
+import com.example.myproject.project.model.DataModel
+import com.example.myproject.project.data.Note
 import com.example.myproject.project.util.Constants
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlin.collections.ArrayList
+import kotlin.collections.HashSet
 
-class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
+class NormalNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private var binding: FragmentNotesBinding? = null
+    private val dataModel: DataModel by viewModels()
     private val adapter = NoteAdapter(this)
-    private val dbManager = MyApplication.dbManager
-    private var list = ArrayList<Note>()
     private var isListView = false
-    private var isChecked = false
-    lateinit var alertDialog: AlertDialog.Builder
-    private var job: Job? = null
 
     private val type = Type.IS_NORMAL.name
 
@@ -47,7 +43,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     }
 
     companion object {
-        fun newInstance() = NotesFragment()
+        fun newInstance() = NormalNotesFragment()
     }
 
     override fun onCreateView(
@@ -56,20 +52,32 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         savedInstanceState: Bundle?
     ): View {
         binding = FragmentNotesBinding.inflate(inflater)
-        retainInstance = true
         return binding?.root!!
 
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        dataModel.openDb()
         binding?.rcList?.adapter = adapter
+        initDataModelContract()
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
         initButton()
         initBottomNavigationView()
         requireActivity().onBackPressedDispatcher.addCallback(callback)
+    }
+
+    private fun initDataModelContract() {
+        dataModel.noteItemList.observe(viewLifecycleOwner, {
+            adapter.updateAdapter(it)
+            binding?.tvListEmpty?.visibleIf(it.isEmpty())
+        })
+    }
+
+    private fun View.visibleIf(show: Boolean) {
+        visibility = if (show) View.VISIBLE else View.GONE
     }
 
     private fun recyclerViewStateCreated() {
@@ -86,12 +94,12 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         if (isListView) {
             binding?.rcList?.layoutManager = GridLayoutManager(context, 1)
             binding?.tbNotes?.menu?.findItem(R.id.list)?.icon =
-                resources.getDrawable(R.drawable.ic_grid)
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_grid)
         } else {
             binding?.rcList?.layoutManager =
                 StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
             binding?.tbNotes?.menu?.findItem(R.id.list)?.icon =
-                resources.getDrawable(R.drawable.ic_list)
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_list)
         }
     }
 
@@ -107,23 +115,14 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     saveTableVariant(isListView)
                 }
                 R.id.chooseAll -> {
-                    val count = adapter.getCheckedCount()
-                    isChecked = count < list.size
-                    adapter.allChecked(isChecked)
-                    val newCount = adapter.getCheckedCount()
+                    val check = dataModel.getCheckedId().size < dataModel.noteItemList.value!!.size
+                    dataModel.allChecked(check)
+                    it.changeColor(check)
+                    val newCount = dataModel.getCheckedId().size
                     binding?.tvTitle?.text =
                         resources.getString(R.string.selected) + " $newCount"
-
-                    val isEnabled = newCount > 0
-                    bottomMenuEnable(isEnabled)
-
-                    var isAnchor = false
-                    for (i in 0 until newCount) {
-                        if (!adapter.getCheckedNotes()[i].isTop) {
-                            isAnchor = true
-                        }
-                    }
-
+                    bottomMenuEnable(newCount > 0)
+                    val isAnchor = dataModel.defineAnchor()
                     if (isAnchor) {
                         changeIcon(true)
                     } else {
@@ -137,18 +136,27 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         }
     }
 
+    private fun MenuItem.changeColor(color: Boolean) {
+        if (color) icon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+            ContextCompat.getColor(
+                requireContext(), R.color.blue
+            ), BlendModeCompat.SRC_ATOP
+        )
+        else icon.clearColorFilter()
+    }
+
     private fun showPopupMenu(v: View) {
         val popupMenu = PopupMenu(context, v)
         popupMenu.inflate(R.menu.folders_popup_menu)
         popupMenu.setOnMenuItemClickListener {
             when (it.itemId) {
-                R.id.trash_can -> (activity as OpenFragment).openTrashCanFragment()
+                R.id.trash_can ->
+                    (activity as OpenFragment).openTrashCanFragment()
                 R.id.personal_folder -> (activity as OpenFragment).openPasswordFragment(false)
             }
             true
         }
         popupMenu.show()
-
     }
 
     private fun saveTableVariant(isListView: Boolean) {
@@ -181,7 +189,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                fillAdapter(newText!!)
+                dataModel.getAdapterItemList(newText!!, type)
                 return true
             }
         })
@@ -197,49 +205,45 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private fun initBottomNavigationView() {
 
         binding?.btMenuNotes?.setOnItemSelectedListener {
-            val checkedItems = adapter.getCheckedNotes()
+            val checkedId: HashSet<Int> = dataModel.getCheckedId()
             when (it.itemId) {
                 R.id.hide -> {
-                    for (i in checkedItems) {
-                        moveToPersonalFolder(i)
-                        adapter.notifyItemRemoved(i.id)
+                    checkedId.forEach { id ->
+                        dataModel.movieToHide(id)
+                        adapter.notifyItemRemoved(id)
                     }
                     val noteMoved = this.resources.getQuantityString(
                         R.plurals.plurals_note_moved,
-                        checkedItems.size
+                        checkedId.size
                     )
                     Toast.makeText(
                         context,
                         "$noteMoved ${resources.getString(R.string.to_personal_folder)}",
                         Toast.LENGTH_LONG
-                    )
-                        .show()
-
-                    fillAdapter("")
+                    ).show()
+                    dataModel.getAdapterItemList("", type)
                     goToNormalView()
                 }
+
                 R.id.pinToTopOfList -> {
-                    if (it.title.equals(resources.getString(R.string.anchor))) {
-                        for (i in checkedItems) {
-                            moveTop(i)
-                        }
-                    } else
-                        for (i in checkedItems) {
-                            removeTop(i)
-                        }
-                    fillAdapter("")
-                    goToNormalView()
+                    val isAnchor = dataModel.defineAnchor()
+                    checkedId.forEach { id ->
+                        dataModel.moveInList(isAnchor, id)
+                        adapter.notifyItemRemoved(id)
+                    }
                     it.setIcon(R.drawable.ic_pin)
                     it.setTitle(R.string.anchor)
+                    dataModel.getAdapterItemList("", type)
+                    goToNormalView()
                 }
                 R.id.deleteNotes -> {
-                    alertDialog = AlertDialog.Builder(context)
+                    val alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
                         this.resources.getQuantityString(
                             R.plurals.plurals_note_count,
-                            checkedItems.size,
-                            checkedItems.size
+                            checkedId.size,
+                            checkedId.size
                         )
                     val message = "${resources.getString(R.string.delete)} $noteString?"
                     alertDialog.setMessage(message)
@@ -247,45 +251,27 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                         R.string.undo
                     ) { dialog, _ ->
                         dialog.dismiss()
+                        goToNormalView()
                     }
                     alertDialog.setPositiveButton(
                         R.string.ok
                     ) { dialog, _ ->
-                        for (i in checkedItems) {
-                            moveToTrash(i)
+                        checkedId.forEach { id ->
+                            dataModel.movieToTrash(id)
+                            adapter.notifyItemRemoved(id)
                         }
-                        fillAdapter("")
+                        dataModel.getAdapterItemList("", type)
                         dialog.dismiss()
+                        goToNormalView()
                     }
-                    goToNormalView()
+
                     val alert = alertDialog.create()
                     alert.show()
                 }
-            }
-            true
+            }; true
         }
     }
 
-    private fun moveToPersonalFolder(note: Note) {
-        note.typeName = Type.IS_HIDDEN.name
-        dbManager.updateItem(note)
-    }
-
-    private fun moveTop(note: Note) {
-        note.isTop = true
-        dbManager.updateItem(note)
-    }
-
-    private fun removeTop(note: Note) {
-        note.isTop = false
-        dbManager.updateItem(note)
-    }
-
-    private fun moveToTrash(note: Note) {
-        note.typeName = Type.IS_TRASHED.name
-        note.removalTime = System.currentTimeMillis()
-        dbManager.updateItem(note)
-    }
 
     private fun goToNormalView() {
         binding?.btMenuNotes?.visibility = View.GONE
@@ -294,28 +280,21 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.tvTitle?.text = ""
         binding?.tbNotes?.menu?.clear()
         binding?.tbNotes?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
+        dataModel.allChecked(false)
         adapter.isShowCheckBox(false)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        dbManager.openDb()
-        fillAdapter("")
+        binding?.tbNotes?.menu?.findItem(R.id.chooseAll)?.changeColor(false)
     }
 
     override fun onClickItem(note: Note?) {
         if (binding!!.fbAdd.visibility == View.VISIBLE) {
             (activity as OpenFragment).openDetailFragment(note!!, false)
         } else {
-            val count = adapter.getCheckedCount()
+            dataModel.updateCheckedList(note!!.id)
+            val count = dataModel.getCheckedId().size
             binding?.tvTitle?.text = resources.getString(R.string.selected) + " $count"
-            if (count > 0) {
+            if (count != 0) {
                 bottomMenuEnable(true)
-                var isAnchor = false
-                val checkedItems = adapter.getCheckedNotes()
-                for (i in checkedItems) {
-                    if (!i.isTop) isAnchor = true
-                }
+                val isAnchor = dataModel.defineAnchor()
                 changeIcon(isAnchor)
             } else bottomMenuEnable(false)
         }
@@ -330,7 +309,7 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.tbNotes?.menu?.clear()
         binding?.tbNotes?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
-        if (adapter.getCheckedNotes().isEmpty()) {
+        if (dataModel.getCheckedId().isEmpty()) {
             bottomMenuEnable(false)
         }
     }
@@ -350,44 +329,32 @@ class NotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         }
     }
 
-    private fun fillAdapter(text: String) {
-        job?.cancel()
-        job = CoroutineScope(Dispatchers.Main).launch {
-            list = dbManager.readDataFromTable(text, type)
-            adapter.updateAdapter(list)
-            if (list.isNotEmpty()) {
-                binding!!.tvGreeting.visibility = View.GONE
+    private val callback = object : OnBackPressedCallback(true) {
+        override fun handleOnBackPressed() {
+            if (binding?.fbAdd?.visibility == View.GONE) {
+                goToNormalView()
             } else {
-                binding!!.tvGreeting.visibility = View.VISIBLE
+                isEnabled = false
+                dataModel.closeBd()
+                activity?.onBackPressed()
             }
         }
     }
 
-    private val callback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding?.fbAdd?.visibility == View.GONE) {
-                    goToNormalView()
-                } else {
-                    isEnabled = false
-                    activity?.onBackPressed()
-                }
-            }
+    override fun onResume() {
+        super.onResume()
+        dataModel.getAdapterItemList("", type)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        callback.remove()
         binding?.rcList?.adapter = null
+        callback.remove()
     }
-
 
     override fun onDestroy() {
         binding = null
         super.onDestroy()
     }
 
-    override fun onStop() {
-        super.onStop()
-        dbManager.closeDb()
-    }
 }

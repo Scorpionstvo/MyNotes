@@ -8,23 +8,20 @@ import android.widget.CheckBox
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.cardview.widget.CardView
-import androidx.recyclerview.widget.AsyncListDiffer
+import androidx.core.os.persistableBundleOf
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.RecyclerView
 import com.example.currentnote.R
-import com.example.myproject.project.NotesDiffCallback
-import com.example.myproject.project.note.Note
+import com.example.myproject.project.data.AdapterItemModel
+import com.example.myproject.project.data.Note
 import com.example.myproject.project.util.DateFormatter
 import com.example.myproject.project.wallpaper.Wallpaper
-import java.util.*
 import kotlin.collections.ArrayList
 
 class NoteAdapter(private val itemClickListener: ItemClickListener) :
     RecyclerView.Adapter<NoteAdapter.NoteHolder>() {
-    private val noteList = ArrayList<Note>()
+    private val noteList = ArrayList<AdapterItemModel>()
     private var isVisible = false
-    private var checked = ArrayList<Boolean>()
-    private var checkedNotes = LinkedList<Note>()
 
     interface ItemClickListener {
         fun onClickItem(note: Note? = null)
@@ -40,7 +37,8 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
         val checkBox: CheckBox = item.findViewById(R.id.checkRec)
         private val pin: ImageView = item.findViewById(R.id.imTop)
 
-        fun initNote(note: Note) {
+        fun initNote(adapterItem: AdapterItemModel) {
+            val note = adapterItem.note
             if (note.title.isEmpty()) tvTitle.visibility = View.GONE
             else {
                 tvTitle.visibility = View.VISIBLE
@@ -58,12 +56,14 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
             } else pin.visibility = View.GONE
 
             if (note.wallpaperName != null) {
-                val wallpaper: Wallpaper = Wallpaper.valueOf(note.wallpaperName!!)
+                val wallpaper: Wallpaper = Wallpaper.valueOf(adapterItem.note.wallpaperName!!)
                 tvTitle.setTextColor(wallpaper.textColor)
                 tvContent.setTextColor(wallpaper.textColor)
                 cardView.setBackgroundResource(wallpaper.primaryBackground)
                 tvTime.setTextColor(wallpaper.textColor)
             }
+            checkBox.isChecked = adapterItem.isChecked
+            checkBox.tag = note.id
         }
 
     }
@@ -79,35 +79,18 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
     }
 
     private fun bind(holder: NoteHolder, position: Int) {
-        if (isVisible) {
-            holder.checkBox.visibility = View.VISIBLE
-            holder.checkBox.isChecked = checked[position]
-        } else {
-            holder.checkBox.visibility = View.GONE
-        }
-
+        holder.checkBox.visibility = if (isVisible) View.VISIBLE else View.GONE
         holder.initNote(noteList[position])
-        for (i in 0 until itemCount) {
-            checked.add(false)
-        }
 
         holder.checkBox.setOnClickListener {
-            val note = noteList[holder.absoluteAdapterPosition]
-            checked[position] = !checked[position]
-            if (checked[position]) checkedNotes.add(note) else checkedNotes.remove(note)
-            itemClickListener.onClickItem()
+            val note = noteList[holder.absoluteAdapterPosition].note
+            itemClickListener.onClickItem(note)
         }
 
         holder.itemView.setOnClickListener {
-            val note = noteList[holder.absoluteAdapterPosition]
-            if (isVisible) {
-                checked[position] = !checked[position]
-                holder.checkBox.isChecked = checked[position]
-                if (checked[position]) checkedNotes.add(note) else checkedNotes.remove(note)
-                itemClickListener.onClickItem()
-            } else {
-                itemClickListener.onClickItem(note)
-            }
+            val note = noteList[holder.absoluteAdapterPosition].note
+            itemClickListener.onClickItem(note)
+            holder.checkBox.isChecked = true
         }
 
         holder.itemView.setOnLongClickListener {
@@ -116,49 +99,21 @@ class NoteAdapter(private val itemClickListener: ItemClickListener) :
         }
     }
 
-    fun allChecked(isChecked: Boolean) {
-        for (i in checked.indices) {
-            checked[i] = isChecked
-        }
-
-        if (!isChecked) {
-            checkedNotes.clear()
-        } else {
-            for (i in noteList) {
-                if (checkedNotes.contains(i)) continue
-                else checkedNotes.add(i)
-            }
-        }
-        notifyDataSetChanged()
-    }
-
-    fun getCheckedNotes(): LinkedList<Note> {
-        return checkedNotes
-    }
-
-    fun getCheckedCount(): Int {
-        return checkedNotes.size
-    }
-
     fun isShowCheckBox(show: Boolean) {
         isVisible = show
-        if (isVisible) {
-            checked.fill(false)
-            checkedNotes.clear()
-        }
         notifyDataSetChanged()
     }
 
-    override fun getItemCount(): Int {
-        return noteList.size
-    }
-
-    fun updateAdapter(listItems: List<Note>) {
+    fun updateAdapter(listItems: ArrayList<AdapterItemModel>) {
         val diffCallback = NotesDiffCallback(noteList, listItems)
         val diffResult = DiffUtil.calculateDiff(diffCallback)
         noteList.clear()
         noteList.addAll(listItems)
         diffResult.dispatchUpdatesTo(this)
+    }
+
+    override fun getItemCount(): Int {
+        return noteList.size
     }
 
 }

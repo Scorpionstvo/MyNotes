@@ -4,39 +4,37 @@ import android.app.AlertDialog
 import android.content.Context
 import android.os.Bundle
 import android.view.LayoutInflater
+import android.view.MenuItem
 import android.view.View
 import android.view.ViewGroup
 import android.widget.SearchView
 import androidx.activity.OnBackPressedCallback
+import androidx.core.content.ContextCompat
+import androidx.core.graphics.BlendModeColorFilterCompat
+import androidx.core.graphics.BlendModeCompat
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.GridLayoutManager
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.example.currentnote.R
 import com.example.currentnote.databinding.FragmentHiddenNotesBinding
 import com.example.myproject.project.adapter.NoteAdapter
 import com.example.myproject.project.type.Type
-import com.example.myproject.project.application.MyApplication
-import com.example.myproject.project.list.NotesFragment
-import com.example.myproject.project.note.Note
+import com.example.myproject.project.list.NormalNotesFragment
+import com.example.myproject.project.model.DataModel
+import com.example.myproject.project.data.Note
 import com.example.myproject.project.util.Constants
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.launch
-import kotlin.collections.ArrayList
 
 class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private var binding: FragmentHiddenNotesBinding? = null
+    private val dataModel: DataModel by viewModels()
     private val adapter = NoteAdapter(this)
-    private val dbManager = MyApplication.dbManager
     private var isListView = false
-    private var job: Job? = null
-    private var isChecked = true
-    private var hiddenList = ArrayList<Note>()
-    lateinit var alertDialog: AlertDialog.Builder
 
     private val type = Type.IS_HIDDEN.name
 
     interface OpenFragment {
+
         fun openDetailFragment(note: Note, isNew: Boolean)
 
         fun openPasswordFragment(isDataChange: Boolean)
@@ -58,13 +56,24 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding?.rcHiddenList?.adapter = adapter
+        initDataModelContract()
         recyclerViewStateCreated()
         initToolbar()
         initSearchView()
         initButton()
         initBottomNavigationView()
         requireActivity().onBackPressedDispatcher.addCallback(callback)
+    }
 
+    private fun initDataModelContract() {
+        dataModel.noteItemList.observe(viewLifecycleOwner, {
+            adapter.updateAdapter(it)
+            binding?.tvHiddenListEmpty?.visibleIf(it.isEmpty())
+        })
+    }
+
+    private fun View.visibleIf(show: Boolean) {
+        visibility = if (show) View.VISIBLE else View.GONE
     }
 
     private fun recyclerViewStateCreated() {
@@ -74,16 +83,19 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                 Context.MODE_PRIVATE
             )
         isListView = share!!.getBoolean(Constants.SHARED_PREF_KEY_NOTES_FRAGMENT, false)
-        changeStateRecyclerView(isListView)
+        choiceStateRecyclerView(isListView)
     }
 
-    private fun changeStateRecyclerView(isListView: Boolean): String {
-        return if (isListView) {
-            binding!!.rcHiddenList.layoutManager = GridLayoutManager(context, 2)
-            resources.getString(R.string.list)
+    private fun choiceStateRecyclerView(isListView: Boolean) {
+        if (isListView) {
+            binding?.rcHiddenList?.layoutManager = GridLayoutManager(context, 1)
+            binding?.tbHiddenNotes?.menu?.findItem(R.id.list)?.icon =
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_grid)
         } else {
-            binding!!.rcHiddenList.layoutManager = GridLayoutManager(context, 1)
-            resources.getString(R.string.grid)
+            binding?.rcHiddenList?.layoutManager =
+                StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL)
+            binding?.tbHiddenNotes?.menu?.findItem(R.id.list)?.icon =
+                ContextCompat.getDrawable(requireContext(), R.drawable.ic_list)
         }
     }
 
@@ -95,27 +107,18 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             when (it.itemId) {
                 R.id.list -> {
                     isListView = !isListView
-                   changeStateRecyclerView(isListView)
+                    choiceStateRecyclerView(isListView)
                     saveTableVariant(isListView)
                 }
                 R.id.chooseAll -> {
-                    val count = adapter.getCheckedCount()
-                    isChecked = count < hiddenList.size
-                    adapter.allChecked(isChecked)
-
-                    val newCount = adapter.getCheckedCount()
-                    binding!!.tvHiddenNotesTitle.text =
+                    val check = dataModel.getCheckedId().size < dataModel.noteItemList.value!!.size
+                    dataModel.allChecked(check)
+                    it.changeColor(check)
+                    val newCount = dataModel.getCheckedId().size
+                    binding?.tvHiddenNotesTitle?.text =
                         resources.getString(R.string.selected) + " $newCount"
-
-                    val isEnabled = newCount > 0
-                    bottomMenuEnable(isEnabled)
-                    var isAnchor = false
-                    for (i in 0 until newCount) {
-                        if (!adapter.getCheckedNotes()[i].isTop) {
-                            isAnchor = true
-                        }
-                    }
-
+                    bottomMenuEnable(newCount > 0)
+                    val isAnchor = dataModel.defineAnchor()
                     if (isAnchor) {
                         changeIcon(true)
                     } else {
@@ -127,6 +130,15 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             }
             true
         }
+    }
+
+    private fun MenuItem.changeColor(color: Boolean) {
+        if (color) icon.colorFilter = BlendModeColorFilterCompat.createBlendModeColorFilterCompat(
+            ContextCompat.getColor(
+                requireContext(), R.color.blue
+            ), BlendModeCompat.SRC_ATOP
+        )
+        else icon.clearColorFilter()
     }
 
     private fun saveTableVariant(isListView: Boolean) {
@@ -148,7 +160,7 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
             }
 
             override fun onQueryTextChange(newText: String?): Boolean {
-                fillAdapter(newText!!)
+                dataModel.getAdapterItemList(newText!!, type)
                 return true
             }
         })
@@ -156,38 +168,37 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
 
 
     private fun initBottomNavigationView() {
+        val checkedId: HashSet<Int> = dataModel.getCheckedId()
         binding?.btMenuHiddenNotes?.setOnItemSelectedListener {
-            val checkedItems = adapter.getCheckedNotes()
+            val checkedId: HashSet<Int> = dataModel.getCheckedId()
             when (it.itemId) {
                 R.id.declassify -> {
-                    for (i in checkedItems) {
-                        declassify(i)
+                    checkedId.forEach { id ->
+                        dataModel.movieToNormal(id)
+                        adapter.notifyItemRemoved(id)
                     }
-                    fillAdapter("")
+                    dataModel.getAdapterItemList("", type)
                     goToNormalView()
                 }
                 R.id.pinToTopOfList -> {
-                    if (it.title.equals(resources.getString(R.string.anchor))) {
-                        for (i in checkedItems) {
-                            moveTop(i)
-                        }
-                    } else
-                        for (i in checkedItems) {
-                            removeTop(i)
-                        }
-                    fillAdapter("")
-                    goToNormalView()
+                    val isAnchor = dataModel.defineAnchor()
+                    checkedId.forEach { id ->
+                        dataModel.moveInList(isAnchor, id)
+                        adapter.notifyItemRemoved(id)
+                    }
                     it.setIcon(R.drawable.ic_pin)
                     it.setTitle(R.string.anchor)
+                    dataModel.getAdapterItemList("", type)
+                    goToNormalView()
                 }
                 R.id.delete -> {
-                    alertDialog = AlertDialog.Builder(context)
+                    val alertDialog = AlertDialog.Builder(context)
                     alertDialog.setTitle(R.string.deleting_notes)
                     val noteString =
                         this.resources.getQuantityString(
                             R.plurals.plurals_note_count,
-                            checkedItems.size,
-                            checkedItems.size
+                            checkedId.size,
+                            checkedId.size
                         )
                     val message = "${resources.getString(R.string.delete)} $noteString?"
                     alertDialog.setMessage(message)
@@ -199,41 +210,20 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
                     alertDialog.setPositiveButton(
                         R.string.ok
                     ) { dialog, _ ->
-                        for (i in checkedItems) {
-                            moveToTrash(i)
-
+                        checkedId.forEach { id ->
+                            dataModel.movieToTrash(id)
+                            adapter.notifyItemRemoved(id)
                         }
-                        fillAdapter("")
+                        dataModel.getAdapterItemList("", type)
                         dialog.dismiss()
+                        goToNormalView()
                     }
-                    goToNormalView()
                     val alert = alertDialog.create()
                     alert.show()
                 }
             }
             true
         }
-    }
-
-    private fun moveTop(note: Note) {
-        note.isTop = true
-        dbManager.updateItem(note)
-    }
-
-    private fun removeTop(note: Note) {
-        note.isTop = false
-        dbManager.updateItem(note)
-    }
-
-    private fun declassify(note: Note) {
-        note.typeName = Type.IS_NORMAL.name
-        dbManager.updateItem(note)
-    }
-
-    private fun moveToTrash(note: Note) {
-        note.typeName = Type.IS_TRASHED.name
-        note.removalTime = System.currentTimeMillis()
-        dbManager.updateItem(note)
     }
 
     private fun goToNormalView() {
@@ -243,35 +233,29 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.tbHiddenNotes?.menu?.clear()
         binding?.tbHiddenNotes?.inflateMenu(R.menu.list_or_grid_toolbar_menu)
         adapter.isShowCheckBox(false)
+        dataModel.allChecked(false)
+        binding?.tbHiddenNotes?.menu?.findItem(R.id.chooseAll)?.changeColor(false)
     }
 
 
     private fun initButton() {
         binding!!.fbAdd.setOnClickListener {
             val newNote = Note(Type.IS_HIDDEN.name)
-            (activity as NotesFragment.OpenFragment).openDetailFragment(newNote, true)
+            (activity as NormalNotesFragment.OpenFragment).openDetailFragment(newNote, true)
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        fillAdapter("")
-        dbManager.openDb()
-    }
 
     override fun onClickItem(note: Note?) {
         if (binding?.btMenuHiddenNotes?.visibility == View.GONE) {
-            (activity as OpenFragment).openDetailFragment(note!!, false)
+            (activity as NormalNotesFragment.OpenFragment).openDetailFragment(note!!, false)
         } else {
-            val count = adapter.getCheckedCount()
+            dataModel.updateCheckedList(note!!.id)
+            val count = dataModel.getCheckedId().size
             binding?.tvHiddenNotesTitle?.text = resources.getString(R.string.selected) + " $count"
-            if (count > 0) {
+            if (count != 0) {
                 bottomMenuEnable(true)
-                var isAnchor = false
-                val checkedItems = adapter.getCheckedNotes()
-                for (i in checkedItems) {
-                    if (!i.isTop) isAnchor = true
-                }
+                val isAnchor = dataModel.defineAnchor()
                 changeIcon(isAnchor)
             } else bottomMenuEnable(false)
         }
@@ -284,7 +268,7 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         binding?.tbHiddenNotes?.menu?.clear()
         binding?.tbHiddenNotes?.inflateMenu(R.menu.choose_all_toolbar_menu)
         adapter.isShowCheckBox(true)
-        if (adapter.getCheckedNotes().isEmpty()) {
+        if (dataModel.getCheckedId().isEmpty()) {
             bottomMenuEnable(false)
         }
     }
@@ -293,12 +277,12 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
     private fun bottomMenuEnable(isEnabled: Boolean) {
         if (isEnabled) {
             binding?.btMenuHiddenNotes?.menu?.findItem(R.id.pinToTopOfList)?.isEnabled = true
-            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.deleteNotes)?.isEnabled = true
+            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.delete)?.isEnabled = true
             binding?.btMenuHiddenNotes?.menu?.findItem(R.id.declassify)?.isEnabled = true
         } else {
             changeIcon(true)
             binding?.btMenuHiddenNotes?.menu?.findItem(R.id.pinToTopOfList)?.isEnabled = false
-            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.deleteNotes)?.isEnabled = false
+            binding?.btMenuHiddenNotes?.menu?.findItem(R.id.delete)?.isEnabled = false
             binding?.btMenuHiddenNotes?.menu?.findItem(R.id.declassify)?.isEnabled = false
             binding!!.btMenuHiddenNotes.menu.findItem(R.id.plug).isChecked = true
             binding!!.btMenuHiddenNotes.menu.setGroupCheckable(0, false, true)
@@ -316,40 +300,29 @@ class HiddenNotesFragment : Fragment(), NoteAdapter.ItemClickListener {
         }
     }
 
-    private fun fillAdapter(text: String) {
-        job?.cancel()
-        job = CoroutineScope(Dispatchers.Main).launch {
-            hiddenList = dbManager.readDataFromTable(text, type)
-            adapter.updateAdapter(hiddenList)
-            if (hiddenList.isNotEmpty()) {
-                binding?.tvHiddenListEmpty?.visibility = View.GONE
-            } else {
-                binding?.tvHiddenListEmpty?.visibility = View.VISIBLE
-            }
-        }
-
-    }
 
     private val callback = object : OnBackPressedCallback(true) {
-            override fun handleOnBackPressed() {
-                if (binding?.fbAdd?.visibility == View.GONE) {
-                    goToNormalView()
-                } else {
-                    isEnabled = false
-                    activity?.onBackPressed()
-                }
+        override fun handleOnBackPressed() {
+            if (binding?.fbAdd?.visibility == View.GONE) {
+                goToNormalView()
+            } else {
+                isEnabled = false
+                activity?.onBackPressed()
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        dataModel.getAdapterItemList("", type)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
         callback.remove()
+        binding?.rcHiddenList?.adapter = null
     }
 
-    override fun onStop() {
-        super.onStop()
-        dbManager.closeDb()
-    }
 
     override fun onDestroy() {
         binding = null

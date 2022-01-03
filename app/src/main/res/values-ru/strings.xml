@@ -52,6 +52,7 @@
     <string name="message_about_deleting_notes_from_trash">Заметки, находящиеся в корзине, через 30 дней будут безвозвратно удалены </string>
     <string name="restore">восстановить</string>
     <string name="title_toolbar_trash_fragment">Корзина</string>
+    <string name="click_trash_item">"Невозможно открыть заметку"</string>
 
     <!-- Hidden Fragment -->
     <string name="declassify">отменить скрытие</string>

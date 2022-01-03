@@ -70,7 +70,8 @@
             android:visibility="gone"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/tvContentNote" />
+            app:layout_constraintTop_toBottomOf="@+id/tvContentNote"
+            android:theme="@style/CheckBox" />
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
